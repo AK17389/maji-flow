@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Login — Maji-Flow{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-left">
+    <div class="auth-brand">
+      <div class="logo-drop"><svg viewBox="0 0 14 14" width="16" height="16" fill="none"><path d="M7 2C7 2 3 5.5 3 8.5C3 10.93 4.79 12.5 7 12.5C9.21 12.5 11 10.93 11 8.5C11 5.5 7 2 7 2Z" fill="white"/></svg></div>
+      <span>Maji-Flow</span>
+    </div>
+    <h2>Welcome back.</h2>
+    <p>Access your water dashboard, monitor usage, and manage your account — all in one secure place.</p>
+    <div class="auth-feats">
+      <div class="auth-feat">
+        <div class="auth-feat-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="2" stroke="#7ee8dc" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0v2" stroke="#7ee8dc" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <p>256-bit SSL encrypted — your data is always protected</p>
+      </div>
+      <div class="auth-feat">
+        <div class="auth-feat-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#7ee8dc" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#7ee8dc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <p>Works seamlessly on mobile, tablet, and desktop</p>
+      </div>
+    </div>
+    <div class="demo-hint">
+      <p class="demo-title">Demo Accounts</p>
+      <p>Resident: <strong>resident@majiflow.co.zm</strong> / water123</p>
+      <p>Utility: <strong>utility@lwsc.co.zm</strong> / lwsc2026</p>
+    </div>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-form">
+      <h3>Secure Login</h3>
+      <p class="auth-sub">Sign in to your Maji-Flow account</p>
+
+      {% if error %}
+      <div class="form-error-banner">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#ef4444" stroke-width="1.4"/><path d="M7 4v3M7 9v.5" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/></svg>
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <div class="secure-note">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="6" width="10" height="7" rx="2" stroke="#0a7a6c" stroke-width="1.4"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" stroke="#0a7a6c" stroke-width="1.4" stroke-linecap="round"/></svg>
+        Your connection to Maji-Flow is secured and encrypted
+      </div>
+
+      <form method="POST" action="{{ url_for('login') }}">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter your password" required>
+        </div>
+        <div class="form-extras">
+          <label class="remember-label"><input type="checkbox" name="remember"> Remember me</label>
+          <a class="forgot-link" href="#">Forgot password?</a>
+        </div>
+        <button type="submit" class="form-submit">Sign In Securely</button>
+      </form>
+
+      <p class="auth-switch">Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

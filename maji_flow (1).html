@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maji-Flow — Smart Water Management for Sustainable Zambian Cities</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --teal:#0E9B8A;--teal-dark:#0a7a6c;--teal-light:#e0f5f2;--teal-mid:#b2e8e2;
+    --green:#4CAF50;--green-dark:#2e7d32;--green-light:#e8f5e9;
+    --dark:#1a2332;--dark-mid:#2d3f55;--text:#374151;--muted:#6b7280;--light:#f8fafc;--white:#ffffff;
+    --border:#e5e7eb;--radius:10px;--radius-lg:16px;--shadow:0 2px 12px rgba(0,0,0,0.08);
+  }
+  body{font-family:'Lato',sans-serif;color:var(--text);background:var(--white);font-size:15px;line-height:1.6}
+  h1,h2,h3,h4{font-family:'Poppins',sans-serif}
+  .page{display:none}.page.active{display:block}
+
+  nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100}
+  .logo{font-family:'Poppins',sans-serif;font-size:20px;font-weight:700;color:var(--teal);display:flex;align-items:center;gap:8px;cursor:pointer}
+  .logo-drop{width:28px;height:28px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .nav-links{display:flex;align-items:center;gap:28px}
+  .nav-links a{font-size:14px;color:var(--text);text-decoration:none;font-weight:500;cursor:pointer;transition:color .2s}
+  .nav-links a:hover{color:var(--teal)}
+  .nav-right{display:flex;align-items:center;gap:12px}
+  .btn-ghost{background:none;border:1.5px solid var(--border);padding:7px 16px;border-radius:var(--radius);font-size:13px;font-family:'Poppins',sans-serif;font-weight:500;cursor:pointer;color:var(--text);transition:all .2s}
+  .btn-ghost:hover{border-color:var(--teal);color:var(--teal)}
+  .btn-teal{background:var(--teal);border:none;padding:8px 18px;border-radius:var(--radius);font-size:13px;font-family:'Poppins',sans-serif;font-weight:600;cursor:pointer;color:white;transition:background .2s}
+  .btn-teal:hover{background:var(--teal-dark)}
+  .btn-large{padding:14px 32px;font-size:16px;border-radius:var(--radius)}
+  .btn-hero-primary{background:var(--teal);border:none;padding:14px 32px;border-radius:var(--radius);font-size:15px;font-family:'Poppins',sans-serif;font-weight:600;cursor:pointer;color:white;transition:all .2s}
+  .btn-hero-primary:hover{background:#0c8779;transform:translateY(-1px)}
+  .btn-hero-secondary{background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.3);padding:14px 28px;border-radius:var(--radius);font-size:15px;font-family:'Poppins',sans-serif;font-weight:500;cursor:pointer;color:white;display:flex;align-items:center;gap:8px;transition:all .2s}
+  .btn-hero-secondary:hover{background:rgba(255,255,255,.18)}
+
+  .hero{background:linear-gradient(135deg,#0a2540 0%,#0e3d5f 50%,#0a4a3c 100%);min-height:88vh;display:flex;align-items:center;padding:80px 40px;position:relative;overflow:hidden}
+  .hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%230E9B8A' fill-opacity='0.06'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+  .hero-content{max-width:620px;position:relative;z-index:1}
+  .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(14,155,138,.25);border:1px solid rgba(14,155,138,.5);color:#7ee8dc;padding:5px 14px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.5px;margin-bottom:24px;font-family:'Poppins',sans-serif}
+  .hero h1{font-size:clamp(32px,4vw,52px);font-weight:700;color:white;line-height:1.15;margin-bottom:20px}
+  .hero h1 span{color:#7ee8dc}
+  .hero p{color:#b0c4d8;font-size:17px;line-height:1.7;margin-bottom:36px;max-width:520px}
+  .hero-ctas{display:flex;gap:14px;flex-wrap:wrap}
+  .play-icon{width:20px;height:20px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .hero-visual{position:absolute;right:60px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:14px;z-index:1}
+  .stat-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius);padding:14px 20px;backdrop-filter:blur(4px)}
+  .stat-pill .num{font-family:'Poppins',sans-serif;font-size:26px;font-weight:700;color:#7ee8dc}
+  .stat-pill .lbl{font-size:12px;color:#b0c4d8;margin-top:2px}
+
+  section{padding:72px 40px}
+  .section-tag{display:inline-block;background:var(--teal-light);color:var(--teal-dark);font-size:12px;font-weight:700;letter-spacing:1px;padding:4px 12px;border-radius:99px;font-family:'Poppins',sans-serif;margin-bottom:12px;text-transform:uppercase}
+  .section-tag.green{background:var(--green-light);color:var(--green-dark)}
+  h2.section-title{font-size:clamp(24px,3vw,38px);font-weight:700;color:var(--dark);margin-bottom:12px;line-height:1.25}
+  p.section-sub{font-size:16px;color:var(--muted);max-width:560px;line-height:1.7}
+  .center-text{text-align:center}
+  .center-text p.section-sub{margin-left:auto;margin-right:auto}
+
+  .challenge-band{background:var(--dark);padding:40px;border-radius:var(--radius-lg);margin:0 0 0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px}
+  .ch-item{text-align:center}
+  .ch-num{font-family:'Poppins',sans-serif;font-size:36px;font-weight:700;color:#7ee8dc}
+  .ch-desc{font-size:13px;color:#94a3b8;margin-top:4px}
+
+  .cards-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
+  .sol-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;transition:all .25s;position:relative;overflow:hidden}
+  .sol-card:hover{box-shadow:var(--shadow);border-color:var(--teal-mid);transform:translateY(-3px)}
+  .sol-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--teal)}
+  .sol-icon{width:52px;height:52px;background:var(--teal-light);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+  .sol-card h3{font-size:18px;font-weight:600;color:var(--dark);margin-bottom:10px}
+  .sol-card p{font-size:14px;color:var(--muted);line-height:1.65}
+  .sol-tag{display:inline-block;background:var(--teal-light);color:var(--teal-dark);font-size:11px;padding:3px 10px;border-radius:99px;margin-top:14px;font-weight:600;font-family:'Poppins',sans-serif}
+
+  .resident-wrap{background:var(--light);border-radius:var(--radius-lg);padding:40px;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;margin-top:48px}
+  .dash-phone{background:var(--white);border:1px solid var(--border);border-radius:24px;padding:24px;box-shadow:var(--shadow)}
+  .phone-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+  .phone-avatar{width:36px;height:36px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;font-family:'Poppins',sans-serif}
+  .phone-header-text h4{font-size:14px;font-weight:600;color:var(--dark)}
+  .phone-header-text p{font-size:12px;color:var(--muted)}
+  .balance-card{background:linear-gradient(135deg,var(--teal) 0%,#0a7a6c 100%);border-radius:var(--radius);padding:22px;color:white;margin-bottom:16px}
+  .balance-label{font-size:12px;opacity:.85;margin-bottom:4px}
+  .balance-num{font-family:'Poppins',sans-serif;font-size:38px;font-weight:700}
+  .balance-sub{font-size:12px;opacity:.75;margin-top:2px}
+  .phone-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .phone-action{border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;cursor:pointer;transition:all .2s}
+  .phone-action:hover{border-color:var(--teal);background:var(--teal-light)}
+  .phone-action .pa-icon{font-size:18px;margin-bottom:4px}
+  .phone-action p{font-size:12px;font-weight:600;color:var(--dark)}
+  .kiosk-list{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .kiosk-header{background:var(--light);padding:10px 14px;font-size:12px;font-weight:700;color:var(--muted);font-family:'Poppins',sans-serif;letter-spacing:.5px}
+  .kiosk-row{display:flex;align-items:center;padding:10px 14px;border-top:1px solid var(--border);justify-content:space-between}
+  .kiosk-dot{width:8px;height:8px;border-radius:50%;margin-right:8px;flex-shrink:0}
+  .kiosk-name{font-size:13px;font-weight:500;color:var(--dark);display:flex;align-items:center}
+  .kiosk-dist{font-size:12px;color:var(--muted)}
+  .kiosk-status{font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600}
+  .status-active{background:#e8f5e9;color:#2e7d32}
+  .status-maint{background:#fff3e0;color:#e65100}
+
+  .util-wrap{background:var(--dark);border-radius:var(--radius-lg);padding:40px;margin-top:48px}
+  .util-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+  .util-header h3{font-size:18px;font-weight:600;color:white}
+  .alert-badge{background:#ef4444;color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;font-family:'Poppins',sans-serif;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+  .util-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .util-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:20px}
+  .util-card-title{font-size:12px;color:#94a3b8;margin-bottom:14px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;font-family:'Poppins',sans-serif}
+  .alert-row{display:flex;align-items:start;gap:10px;padding:10px 12px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:8px;margin-bottom:8px}
+  .alert-row p{font-size:12px;color:#fca5a5;line-height:1.4}
+  .mini-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .mini-bar-label{font-size:12px;color:#94a3b8;width:80px;flex-shrink:0}
+  .mini-bar-track{flex:1;background:rgba(255,255,255,.1);border-radius:99px;height:6px;overflow:hidden}
+  .mini-bar-fill{height:100%;border-radius:99px;background:var(--teal)}
+  .mini-bar-val{font-size:12px;color:#7ee8dc;font-family:'Poppins',sans-serif;font-weight:600;width:36px;text-align:right}
+  .map-placeholder{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden}
+  .map-dot{width:10px;height:10px;border-radius:50%;position:absolute;border:2px solid}
+
+  .impact-section{background:linear-gradient(135deg,#0a2540 0%,#0a4a3c 100%);color:white}
+  .impact-section .section-tag{background:rgba(126,232,220,.2);color:#7ee8dc}
+  .impact-section h2.section-title{color:white}
+  .impact-section p.section-sub{color:#b0c4d8}
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
+  .stat-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:var(--radius-lg);padding:28px;text-align:center}
+  .stat-card .big-num{font-family:'Poppins',sans-serif;font-size:44px;font-weight:700;color:#7ee8dc;line-height:1}
+  .stat-card .stat-label{font-size:14px;color:#94a3b8;margin-top:8px}
+  .stat-card .stat-desc{font-size:13px;color:#b0c4d8;margin-top:6px;line-height:1.5}
+  .sdg-band{display:flex;gap:16px;margin-top:40px;flex-wrap:wrap;justify-content:center}
+  .sdg-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:99px;padding:8px 18px;font-size:13px;color:#b0c4d8;display:flex;align-items:center;gap:6px}
+  .sdg-dot{width:10px;height:10px;border-radius:50%}
+
+  .partners-section{background:var(--light)}
+  .partner-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
+  .partner-card{background:white;border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px 24px;text-align:center;transition:all .2s}
+  .partner-card:hover{box-shadow:var(--shadow);border-color:var(--teal-mid)}
+  .partner-logo{width:64px;height:64px;background:var(--teal-light);border-radius:12px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center}
+  .partner-card h4{font-size:15px;font-weight:600;color:var(--dark);margin-bottom:6px}
+  .partner-card p{font-size:13px;color:var(--muted)}
+
+  footer{background:var(--dark);color:#94a3b8;padding:56px 40px 32px}
+  .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+  .footer-logo{font-family:'Poppins',sans-serif;font-size:22px;font-weight:700;color:white;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .footer-desc{font-size:14px;line-height:1.65;margin-bottom:16px}
+  .social-row{display:flex;gap:10px}
+  .social-btn{width:34px;height:34px;background:rgba(255,255,255,.08);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(255,255,255,.1);transition:all .2s}
+  .social-btn:hover{background:var(--teal);border-color:var(--teal)}
+  .footer-col h5{font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;color:white;margin-bottom:14px;letter-spacing:.5px}
+  .footer-col a{display:block;font-size:13px;color:#94a3b8;text-decoration:none;margin-bottom:8px;cursor:pointer;transition:color .2s}
+  .footer-col a:hover{color:#7ee8dc}
+  .footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:24px;display:flex;align-items:center;justify-content:space-between}
+
+  .auth-wrap{min-height:100vh;display:flex}
+  .auth-left{flex:1;background:linear-gradient(135deg,#0a2540,#0a4a3c);display:flex;flex-direction:column;justify-content:center;padding:60px;color:white}
+  .auth-left h2{font-size:32px;font-weight:700;color:white;margin:16px 0 12px}
+  .auth-left p{color:#b0c4d8;font-size:15px;line-height:1.65;max-width:360px}
+  .auth-feat{display:flex;align-items:center;gap:12px;margin-top:20px}
+  .auth-feat-icon{width:36px;height:36px;background:rgba(126,232,220,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .auth-feat p{font-size:13px;color:#b0c4d8}
+  .auth-right{flex:1;background:white;display:flex;align-items:center;justify-content:center;padding:60px}
+  .auth-form{width:100%;max-width:400px}
+  .auth-form h3{font-size:26px;font-weight:700;color:var(--dark);margin-bottom:6px}
+  .auth-form .auth-sub{font-size:14px;color:var(--muted);margin-bottom:28px}
+  .form-group{margin-bottom:18px}
+  .form-group label{display:block;font-size:13px;font-weight:600;color:var(--dark);margin-bottom:6px;font-family:'Poppins',sans-serif}
+  .form-group input,.form-group select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;color:var(--dark);font-family:'Lato',sans-serif;transition:border .2s;outline:none}
+  .form-group input:focus{border-color:var(--teal)}
+  .type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px}
+  .type-btn{border:1.5px solid var(--border);padding:10px;border-radius:var(--radius);cursor:pointer;text-align:center;font-size:13px;font-weight:600;color:var(--muted);background:white;transition:all .2s;font-family:'Poppins',sans-serif}
+  .type-btn.active{border-color:var(--teal);color:var(--teal);background:var(--teal-light)}
+  .form-submit{width:100%;background:var(--teal);color:white;border:none;padding:13px;border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;transition:background .2s;margin-top:8px}
+  .form-submit:hover{background:var(--teal-dark)}
+  .auth-switch{text-align:center;margin-top:20px;font-size:14px;color:var(--muted)}
+  .auth-switch a{color:var(--teal);cursor:pointer;font-weight:600}
+  .secure-note{display:flex;align-items:center;gap:6px;background:var(--teal-light);padding:8px 12px;border-radius:8px;margin-bottom:20px;font-size:13px;color:var(--teal-dark);font-weight:500}
+</style>
+</head>
+<body>
+
+<div id="home-page" class="page active">
+  <nav>
+    <div class="logo" onclick="showPage('home-page')">
+      <div class="logo-drop">
+        <svg viewBox="0 0 14 14" width="14" height="14" fill="none"><path d="M7 2C7 2 3 5.5 3 8.5C3 10.93 4.79 12.5 7 12.5C9.21 12.5 11 10.93 11 8.5C11 5.5 7 2 7 2Z" fill="white"/></svg>
+      </div>
+      Maji-Flow
+    </div>
+    <div class="nav-links">
+      <a onclick="document.getElementById('solution').scrollIntoView({behavior:'smooth'})">Our Solution</a>
+      <a onclick="document.getElementById('impact').scrollIntoView({behavior:'smooth'})">Impact</a>
+      <a onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Contact</a>
+    </div>
+    <div class="nav-right">
+      <button class="btn-ghost" onclick="showPage('login-page')">Login</button>
+      <button class="btn-teal" onclick="showPage('register-page')">Register</button>
+      <button class="btn-teal" style="background:#0a7a6c" onclick="showPage('register-page')">Request Demo</button>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#7ee8dc"/></svg>
+        Smart Water Technology · Zambia
+      </div>
+      <h1>Revolutionizing<br><span>Urban Water</span><br>in Zambia.</h1>
+      <p>Eliminating leaks, automating payments, and ensuring sustainable, reliable water access for every household — powered by IoT and AI.</p>
+      <div class="hero-ctas">
+        <button class="btn-hero-primary btn-large" onclick="showPage('register-page')">Get Started</button>
+        <button class="btn-hero-secondary">
+          <div class="play-icon"><svg width="8" height="9" viewBox="0 0 8 9" fill="none"><path d="M1 1.5L7 4.5L1 7.5V1.5Z" fill="#0a2540"/></svg></div>
+          Watch 2-Minute Explanation
+        </button>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="stat-pill"><div class="num">25%</div><div class="lbl">Reduction in water loss</div></div>
+      <div class="stat-pill"><div class="num">10K+</div><div class="lbl">Households served</div></div>
+      <div class="stat-pill"><div class="num">95%</div><div class="lbl">Kiosk uptime SLA</div></div>
+    </div>
+  </section>
+
+  <section style="padding:48px 40px;background:var(--dark)" id="solution">
+    <div style="text-align:center;margin-bottom:32px">
+      <span class="section-tag" style="background:rgba(126,232,220,.2);color:#7ee8dc">The Challenge</span>
+      <h2 style="color:white;font-size:28px;margin-top:8px">Zambia's Urban Water Crisis</h2>
+    </div>
+    <div class="challenge-band">
+      <div class="ch-item"><div class="ch-num">40–60%</div><div class="ch-desc">Non-Revenue Water (NRW) lost to aging pipe infrastructure across Lusaka</div></div>
+      <div class="ch-item"><div class="ch-num">3.5M</div><div class="ch-desc">Urban residents without reliable, metered water access in Zambia</div></div>
+      <div class="ch-item"><div class="ch-num">72hrs</div><div class="ch-desc">Average manual leak detection delay — Maji-Flow cuts this to under 6 hours</div></div>
+    </div>
+  </section>
+
+  <section style="padding:72px 40px;background:var(--light)">
+    <div style="text-align:center">
+      <span class="section-tag">Our Solution</span>
+      <h2 class="section-title" style="text-align:center">One Platform. Three Pillars.</h2>
+      <p class="section-sub" style="text-align:center;margin:0 auto">Maji-Flow integrates smart hardware, mobile payments, and AI analytics to transform how Zambian cities manage water.</p>
+    </div>
+    <div class="cards-3">
+      <div class="sol-card">
+        <div class="sol-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#0E9B8A" stroke-width="2"/><path d="M8 12h8M12 8v8" stroke="#0E9B8A" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <h3>Smart Metering</h3>
+        <p>IoT-enabled prepaid meters provide real-time flow tracking, remote tamper detection, and automated usage reporting — no manual reading required.</p>
+        <span class="sol-tag">Hardware + IoT</span>
+      </div>
+      <div class="sol-card">
+        <div class="sol-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="5" y="4" width="14" height="17" rx="2" stroke="#0E9B8A" stroke-width="2"/><path d="M9 9h6M9 13h6M9 17h3" stroke="#0E9B8A" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <h3>Instant Top-ups</h3>
+        <p>Residents buy water credits via Airtel Money, MTN Mobile Money, or Zamtel Kwacha — seamlessly reflected on their meter within seconds of payment.</p>
+        <span class="sol-tag">Mobile Money Integration</span>
+      </div>
+      <div class="sol-card">
+        <div class="sol-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#0E9B8A" stroke-width="2"/><path d="M12 7v5l3 3" stroke="#0E9B8A" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <h3>AI Leak Detection</h3>
+        <p>Our machine learning engine continuously monitors flow patterns across the network, flagging anomalies and pinpointing leak locations before they escalate.</p>
+        <span class="sol-tag">AI + Predictive Analytics</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:72px 40px;background:white">
+    <div>
+      <span class="section-tag green">For Residents</span>
+      <h2 class="section-title">Water Access, Simplified.</h2>
+      <p class="section-sub">Your water balance, payment history, and nearest kiosk — all in one mobile-first portal designed for every Lusaka neighbourhood.</p>
+    </div>
+    <div class="resident-wrap">
+      <div>
+        <h3 style="font-size:20px;font-weight:600;color:var(--dark);margin-bottom:16px">What residents get</h3>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:start;gap:12px">
+            <div style="width:32px;height:32px;background:var(--teal-light);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-7" stroke="#0E9B8A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><p style="font-size:14px;font-weight:600;color:var(--dark)">Live balance in litres</p><p style="font-size:13px;color:var(--muted)">Always know exactly how much water you have remaining</p></div>
+          </div>
+          <div style="display:flex;align-items:start;gap:12px">
+            <div style="width:32px;height:32px;background:var(--teal-light);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-7" stroke="#0E9B8A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><p style="font-size:14px;font-weight:600;color:var(--dark)">One-tap top-up via mobile money</p><p style="font-size:13px;color:var(--muted)">Buy water credits with Airtel, MTN, or Zamtel — reflected in seconds</p></div>
+          </div>
+          <div style="display:flex;align-items:start;gap:12px">
+            <div style="width:32px;height:32px;background:var(--teal-light);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-7" stroke="#0E9B8A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><p style="font-size:14px;font-weight:600;color:var(--dark)">Find nearest active kiosk</p><p style="font-size:13px;color:var(--muted)">Live map of operational kiosks with real-time status</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-phone">
+        <div class="phone-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="phone-avatar">CM</div>
+            <div class="phone-header-text"><h4>Chanda Mutale</h4><p>Residential · Matero</p></div>
+          </div>
+          <div style="font-size:11px;color:var(--teal);font-weight:600;background:var(--teal-light);padding:3px 8px;border-radius:99px">Active</div>
+        </div>
+        <div class="balance-card">
+          <div class="balance-label">Available Balance</div>
+          <div class="balance-num">847 <span style="font-size:18px;font-weight:400;opacity:.85">L</span></div>
+          <div class="balance-sub">Last topped up: Today, 09:14 · ZMW 45.00</div>
+        </div>
+        <div class="phone-actions">
+          <div class="phone-action"><div class="pa-icon">💧</div><p>Buy Water</p></div>
+          <div class="phone-action"><div class="pa-icon">📍</div><p>Find Kiosk</p></div>
+          <div class="phone-action"><div class="pa-icon">🧾</div><p>History</p></div>
+          <div class="phone-action"><div class="pa-icon">⚙️</div><p>Settings</p></div>
+        </div>
+        <div class="kiosk-list">
+          <div class="kiosk-header">NEAREST ACTIVE KIOSKS</div>
+          <div class="kiosk-row"><div class="kiosk-name"><div class="kiosk-dot" style="background:#22c55e"></div>Matero Kiosk 02</div><div style="display:flex;align-items:center;gap:10px"><div class="kiosk-dist">0.3 km</div><div class="kiosk-status status-active">Open</div></div></div>
+          <div class="kiosk-row"><div class="kiosk-name"><div class="kiosk-dot" style="background:#22c55e"></div>Chelstone Hub</div><div style="display:flex;align-items:center;gap:10px"><div class="kiosk-dist">1.1 km</div><div class="kiosk-status status-active">Open</div></div></div>
+          <div class="kiosk-row"><div class="kiosk-name"><div class="kiosk-dot" style="background:#f59e0b"></div>Northmead Point</div><div style="display:flex;align-items:center;gap:10px"><div class="kiosk-dist">2.4 km</div><div class="kiosk-status status-maint">Maintenance</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:72px 40px;background:var(--light)">
+    <div>
+      <span class="section-tag">For Utilities</span>
+      <h2 class="section-title">Optimize Your Network.<br>Maximize Revenue.</h2>
+      <p class="section-sub">Give your operations team a command center that turns raw sensor data into actionable intelligence — in real time.</p>
+    </div>
+    <div class="util-wrap">
+      <div class="util-header">
+        <h3>Network Operations Center</h3>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:12px;color:#94a3b8">LWSC · Lusaka Zone B</div>
+          <div class="alert-badge">2 Active Alerts</div>
+        </div>
+      </div>
+      <div class="util-grid">
+        <div class="util-card">
+          <div class="util-card-title">Live Network Map</div>
+          <div class="map-placeholder">
+            <div class="map-dot" style="background:#4ade80;border-color:#22c55e;box-shadow:0 0 0 4px rgba(74,222,128,.2);top:30%;left:25%"></div>
+            <div class="map-dot" style="background:#4ade80;border-color:#22c55e;box-shadow:0 0 0 4px rgba(74,222,128,.2);top:55%;left:60%"></div>
+            <div class="map-dot" style="background:#f87171;border-color:#ef4444;box-shadow:0 0 0 4px rgba(248,113,113,.2);top:42%;left:42%;animation:pulse 1.5s infinite"></div>
+            <div class="map-dot" style="background:#fbbf24;border-color:#f59e0b;top:20%;left:68%"></div>
+            <div class="map-dot" style="background:#4ade80;border-color:#22c55e;top:70%;left:30%"></div>
+            <p style="position:absolute;bottom:12px;font-size:11px;color:#94a3b8">Kiosk 04, Matero — ALERT</p>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:10px">
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#94a3b8"><div style="width:8px;height:8px;border-radius:50%;background:#4ade80"></div>Operational (14)</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#94a3b8"><div style="width:8px;height:8px;border-radius:50%;background:#f87171"></div>Alert (1)</div>
+          </div>
+        </div>
+        <div class="util-card">
+          <div class="util-card-title">Anomaly Alerts</div>
+          <div class="alert-row"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><path d="M8 1L15 14H1L8 1Z" stroke="#ef4444" stroke-width="1.5"/><path d="M8 6v4M8 11.5v.5" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/></svg><p><strong style="color:#ef4444">ALERT:</strong> High flow anomaly — Kiosk 04, Matero. Possible main pipe breach. Flagged 08:47 AM.</p></div>
+          <div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:10px 12px;margin-bottom:8px"><p style="font-size:12px;color:#fcd34d"><strong style="color:#fbbf24">WARNING:</strong> Kiosk 09 (Northmead) pressure below threshold.</p></div>
+          <div style="padding:10px 12px;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:8px"><p style="font-size:12px;color:#86efac">Network efficiency this week: <strong style="color:#4ade80">91.4%</strong> — up 3.2%</p></div>
+        </div>
+        <div class="util-card" style="grid-column:1/-1">
+          <div class="util-card-title">Zone Consumption Trends (Today)</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+            <div class="mini-bar"><div class="mini-bar-label">Matero</div><div class="mini-bar-track"><div class="mini-bar-fill" style="width:87%"></div></div><div class="mini-bar-val">87%</div></div>
+            <div class="mini-bar"><div class="mini-bar-label">Chelstone</div><div class="mini-bar-track"><div class="mini-bar-fill" style="width:72%"></div></div><div class="mini-bar-val">72%</div></div>
+            <div class="mini-bar"><div class="mini-bar-label">Northmead</div><div class="mini-bar-track"><div class="mini-bar-fill" style="width:61%"></div></div><div class="mini-bar-val">61%</div></div>
+            <div class="mini-bar"><div class="mini-bar-label">Woodlands</div><div class="mini-bar-track"><div class="mini-bar-fill" style="width:54%"></div></div><div class="mini-bar-val">54%</div></div>
+            <div class="mini-bar"><div class="mini-bar-label">Kabulonga</div><div class="mini-bar-track"><div class="mini-bar-fill" style="width:44%"></div></div><div class="mini-bar-val">44%</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="impact-section" style="padding:72px 40px" id="impact">
+    <div class="center-text">
+      <span class="section-tag">Impact & Sustainability</span>
+      <h2 class="section-title">Building a Climate-Resilient Zambia.</h2>
+      <p class="section-sub">Aligned with Zambia's 2026–2027 Urban Sustainability Framework and African Development Goals for inclusive water access.</p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="big-num">25%</div><div class="stat-label">Reduction in Non-Revenue Water</div><div class="stat-desc">Average NRW drop across pilot corridors within 6 months of deployment</div></div>
+      <div class="stat-card"><div class="big-num">95%</div><div class="stat-label">Kiosk Uptime SLA</div><div class="stat-desc">Guaranteed availability backed by predictive maintenance and remote diagnostics</div></div>
+      <div class="stat-card"><div class="big-num">10,000</div><div class="stat-label">Households Served</div><div class="stat-desc">Across Matero, Chelstone, Northmead, and Woodlands in Phase 1</div></div>
+    </div>
+    <div class="sdg-band">
+      <div class="sdg-pill"><div class="sdg-dot" style="background:#1e88e5"></div>SDG 6 — Clean Water & Sanitation</div>
+      <div class="sdg-pill"><div class="sdg-dot" style="background:#43a047"></div>SDG 11 — Sustainable Cities</div>
+      <div class="sdg-pill"><div class="sdg-dot" style="background:#fb8c00"></div>SDG 13 — Climate Action</div>
+      <div class="sdg-pill"><div class="sdg-dot" style="background:#8e24aa"></div>Zambia NDP 8 Alignment</div>
+    </div>
+  </section>
+
+  <section class="partners-section" style="padding:72px 40px">
+    <div class="center-text">
+      <span class="section-tag">Our Partners</span>
+      <h2 class="section-title">Backed by Zambia's Leading Institutions</h2>
+    </div>
+    <div class="partner-grid">
+      <div class="partner-card"><div class="partner-logo"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="4" y="4" width="20" height="20" rx="4" fill="#0E9B8A" opacity=".3"/><path d="M9 14h10M14 9v10" stroke="#0E9B8A" stroke-width="2.5" stroke-linecap="round"/></svg></div><h4>Ministry of Water Development</h4><p>Republic of Zambia — Policy framework and regulatory oversight partner</p></div>
+      <div class="partner-card"><div class="partner-logo"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="10" stroke="#0E9B8A" stroke-width="2" opacity=".5"/><path d="M14 9v5l3 3" stroke="#0E9B8A" stroke-width="2.5" stroke-linecap="round"/></svg></div><h4>Lusaka Water & Sanitation Co.</h4><p>LWSC — Primary utility deployment partner for Phase 1 rollout</p></div>
+      <div class="partner-card"><div class="partner-logo"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M5 14C5 9 9 5 14 5C19 5 23 9 23 14" stroke="#0E9B8A" stroke-width="2"/><rect x="9" y="14" width="10" height="9" rx="2" fill="#0E9B8A" opacity=".3" stroke="#0E9B8A" stroke-width="2"/></svg></div><h4>African Development Partner</h4><p>Impact investment consortium providing scale-up capital and technical TA</p></div>
+    </div>
+  </section>
+
+  <section style="padding:72px 40px;background:var(--teal);text-align:center" id="contact">
+    <h2 style="font-size:34px;font-weight:700;color:white;margin-bottom:12px">Ready to Transform Your Network?</h2>
+    <p style="font-size:16px;color:rgba(255,255,255,.85);max-width:520px;margin:0 auto 32px">Join the growing number of Zambian utilities and municipalities building the next generation of water infrastructure with Maji-Flow.</p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <button class="btn-hero-primary btn-large" style="background:white;color:var(--teal)" onclick="showPage('register-page')">Request a Demo</button>
+      <button class="btn-hero-secondary btn-large">Contact Our Team</button>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo"><div class="logo-drop"><svg viewBox="0 0 14 14" width="16" height="16" fill="none"><path d="M7 2C7 2 3 5.5 3 8.5C3 10.93 4.79 12.5 7 12.5C9.21 12.5 11 10.93 11 8.5C11 5.5 7 2 7 2Z" fill="white"/></svg></div>Maji-Flow</div>
+        <p class="footer-desc">Smart water management for sustainable Zambian cities. IoT · AI · Mobile Money.</p>
+        <p class="footer-desc" style="font-size:13px">Plot 14B, Addis Ababa Drive<br>Longacres, Lusaka 10101, Zambia<br>info@majiflow.co.zm · +260 211 000 000</p>
+        <div class="social-row">
+          <div class="social-btn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2h3l1.5 3.5-2 1C5.5 8.5 5.5 8.5 7.5 10.5l1-2L12 10v3c-5.5.5-11-5-10-11Z" stroke="#94a3b8" stroke-width="1.2"/></svg></div>
+          <div class="social-btn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="3" stroke="#94a3b8" stroke-width="1.2"/><circle cx="7" cy="7" r="2.5" stroke="#94a3b8" stroke-width="1.2"/></svg></div>
+        </div>
+      </div>
+      <div class="footer-col"><h5>Company</h5><a>About Us</a><a>Careers</a><a>Press</a><a>Blog</a></div>
+      <div class="footer-col"><h5>Product</h5><a>Our Solution</a><a>Pricing</a><a>Case Studies</a><a>FAQ</a></div>
+      <div class="footer-col"><h5>Support</h5><a>Help Centre</a><a>Documentation</a><a>Privacy Policy</a><a>Terms of Use</a></div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Maji-Flow Technologies Ltd. All rights reserved.</p>
+      <p style="font-size:12px">Registered in Zambia · VAT No. ZM-4401-2024</p>
+    </div>
+  </footer>
+</div>
+
+<!-- LOGIN -->
+<div id="login-page" class="page">
+  <div class="auth-wrap">
+    <div class="auth-left">
+      <div class="logo" onclick="showPage('home-page')"><div class="logo-drop"><svg viewBox="0 0 14 14" width="16" height="16" fill="none"><path d="M7 2C7 2 3 5.5 3 8.5C3 10.93 4.79 12.5 7 12.5C9.21 12.5 11 10.93 11 8.5C11 5.5 7 2 7 2Z" fill="white"/></svg></div>Maji-Flow</div>
+      <h2>Welcome back.</h2>
+      <p>Access your water dashboard, monitor usage, and manage your account — all in one secure place.</p>
+      <div class="auth-feat" style="margin-top:28px"><div class="auth-feat-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="2" stroke="#7ee8dc" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0v2" stroke="#7ee8dc" stroke-width="1.5" stroke-linecap="round"/></svg></div><p>256-bit SSL encrypted · Your data is always secure</p></div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-form">
+        <h3>Secure Login</h3>
+        <p class="auth-sub">Sign in to your Maji-Flow account</p>
+        <div class="secure-note"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="6" width="10" height="7" rx="2" stroke="#0a7a6c" stroke-width="1.4"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" stroke="#0a7a6c" stroke-width="1.4" stroke-linecap="round"/></svg>Your connection to Maji-Flow is secured and encrypted</div>
+        <div class="form-group"><label>Phone Number or Email</label><input type="text" placeholder="+260 9X XXX XXXX or email@example.com"></div>
+        <div class="form-group"><label>Password</label><input type="password" placeholder="Enter your password"></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:13px"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--muted)"><input type="checkbox" style="width:auto"> Remember me</label><a style="color:var(--teal);cursor:pointer;font-weight:600">Forgot password?</a></div>
+        <button class="form-submit" onclick="showPage('home-page')">Sign In Securely</button>
+        <p class="auth-switch">Don't have an account? <a onclick="showPage('register-page')">Register here</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div id="register-page" class="page">
+  <div class="auth-wrap">
+    <div class="auth-left">
+      <div class="logo" onclick="showPage('home-page')"><div class="logo-drop"><svg viewBox="0 0 14 14" width="16" height="16" fill="none"><path d="M7 2C7 2 3 5.5 3 8.5C3 10.93 4.79 12.5 7 12.5C9.21 12.5 11 10.93 11 8.5C11 5.5 7 2 7 2Z" fill="white"/></svg></div>Maji-Flow</div>
+      <h2>Join Maji-Flow.</h2>
+      <p>Get real-time access to your water balance, buy credits instantly, and find your nearest kiosk — all from your phone.</p>
+      <div class="auth-feat" style="margin-top:28px"><div class="auth-feat-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5C3 5.46 5.46 3 8.5 3S14 5.46 14 8.5 11.54 14 8.5 14c-1.1 0-2.1-.32-2.94-.86L2 14l1.38-3.52A5.48 5.48 0 013 8.5z" stroke="#7ee8dc" stroke-width="1.5"/></svg></div><p>Supports Airtel Money, MTN MoMo & Zamtel Kwacha</p></div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-form">
+        <h3>Create Account</h3>
+        <p class="auth-sub">Choose how you'd like to register</p>
+        <div class="type-toggle">
+          <button class="type-btn active" id="res-btn" onclick="setType('resident')">💧 Resident</button>
+          <button class="type-btn" id="util-btn" onclick="setType('utility')">🏢 Utility Partner</button>
+        </div>
+        <div class="form-group"><label>Full Name</label><input type="text" placeholder="e.g. Chanda Mutale"></div>
+        <div class="form-group" id="phone-group"><label>Phone Number (Mobile Money)</label><input type="tel" placeholder="+260 9X XXX XXXX"></div>
+        <div class="form-group" id="email-group" style="display:none"><label>Work Email Address</label><input type="email" placeholder="name@organisation.co.zm"></div>
+        <div class="form-group" id="org-group" style="display:none"><label>Organisation / Utility Name</label><input type="text" placeholder="e.g. Lusaka Water and Sanitation Company"></div>
+        <div class="form-group"><label>Create Password</label><input type="password" placeholder="Minimum 8 characters"></div>
+        <button class="form-submit" onclick="showPage('home-page')">Create My Account</button>
+        <p class="auth-switch">Already registered? <a onclick="showPage('login-page')">Sign in here</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
+  function setType(type){
+    const rb=document.getElementById('res-btn'),ub=document.getElementById('util-btn');
+    const ph=document.getElementById('phone-group'),em=document.getElementById('email-group'),og=document.getElementById('org-group');
+    if(type==='resident'){rb.classList.add('active');ub.classList.remove('active');ph.style.display='block';em.style.display='none';og.style.display='none'}
+    else{ub.classList.add('active');rb.classList.remove('active');ph.style.display='none';em.style.display='block';og.style.display='block'}
+  }
+</script>
+</body>
+</html>

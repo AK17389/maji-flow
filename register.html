@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Register — Maji-Flow{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-left">
+    <div class="auth-brand">
+      <div class="logo-drop"><svg viewBox="0 0 14 14" width="16" height="16" fill="none"><path d="M7 2C7 2 3 5.5 3 8.5C3 10.93 4.79 12.5 7 12.5C9.21 12.5 11 10.93 11 8.5C11 5.5 7 2 7 2Z" fill="white"/></svg></div>
+      <span>Maji-Flow</span>
+    </div>
+    <h2>Join Maji-Flow.</h2>
+    <p>Get real-time access to your water balance, buy credits instantly, and find your nearest kiosk — all from your phone.</p>
+    <div class="auth-feats">
+      <div class="auth-feat">
+        <div class="auth-feat-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5C3 5.46 5.46 3 8.5 3S14 5.46 14 8.5 11.54 14 8.5 14c-1.1 0-2.1-.32-2.94-.86L2 14l1.38-3.52A5.48 5.48 0 013 8.5z" stroke="#7ee8dc" stroke-width="1.5"/></svg></div>
+        <p>Supports Airtel Money, MTN MoMo & Zamtel Kwacha</p>
+      </div>
+      <div class="auth-feat">
+        <div class="auth-feat-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L2 5v4c0 3 2.4 5.7 6 6.3C11.6 14.7 14 12 14 9V5L8 2z" stroke="#7ee8dc" stroke-width="1.5"/></svg></div>
+        <p>Protected under the Zambia Data Privacy Act</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-form">
+      <h3>Create Account</h3>
+      <p class="auth-sub">Choose how you'd like to register</p>
+
+      {% if error %}
+      <div class="form-error-banner">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#ef4444" stroke-width="1.4"/><path d="M7 4v3M7 9v.5" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/></svg>
+        {{ error }}
+      </div>
+      {% endif %}
+
+      {% if success %}
+      <div class="form-success-banner">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#22c55e" stroke-width="1.4"/><path d="M4 7l2 2 4-4" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        {{ success }} <a href="{{ url_for('login') }}">Sign in →</a>
+      </div>
+      {% endif %}
+
+      <form method="POST" action="{{ url_for('register') }}">
+        <div class="type-toggle">
+          <button type="button" class="type-btn active" id="res-btn" onclick="setType('resident')">💧 Resident</button>
+          <button type="button" class="type-btn" id="util-btn" onclick="setType('utility')">🏢 Utility Partner</button>
+        </div>
+        <input type="hidden" name="user_type" id="user_type_field" value="resident">
+
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" name="name" placeholder="e.g. Chanda Mutale" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group" id="phone-group">
+          <label for="phone">Phone Number (Mobile Money)</label>
+          <input type="tel" id="phone" name="phone" placeholder="+260 9X XXX XXXX">
+        </div>
+        <div class="form-group" id="org-group" style="display:none">
+          <label for="organisation">Organisation / Utility Name</label>
+          <input type="text" id="organisation" name="organisation" placeholder="e.g. Lusaka Water and Sanitation Company">
+        </div>
+        <div class="form-group">
+          <label for="password">Create Password</label>
+          <input type="password" id="password" name="password" placeholder="Minimum 8 characters" minlength="8" required>
+        </div>
+        <button type="submit" class="form-submit">Create My Account</button>
+      </form>
+
+      <p class="auth-switch">Already registered? <a href="{{ url_for('login') }}">Sign in here</a></p>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+function setType(type) {
+  const rb = document.getElementById('res-btn');
+  const ub = document.getElementById('util-btn');
+  const ph = document.getElementById('phone-group');
+  const og = document.getElementById('org-group');
+  const field = document.getElementById('user_type_field');
+  if (type === 'resident') {
+    rb.classList.add('active'); ub.classList.remove('active');
+    ph.style.display = 'block'; og.style.display = 'none';
+    field.value = 'resident';
+  } else {
+    ub.classList.add('active'); rb.classList.remove('active');
+    ph.style.display = 'none'; og.style.display = 'block';
+    field.value = 'utility';
+  }
+}
+</script>
+{% endblock %}
+{% endblock %}

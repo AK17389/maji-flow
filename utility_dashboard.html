@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Network Operations Center — Maji-Flow{% endblock %}
+
+{% block content %}
+<div class="dash-wrap">
+
+  <!-- Sidebar -->
+  <aside class="dash-sidebar dark-sidebar">
+    <div class="sidebar-profile">
+      <div class="sidebar-avatar utility-avatar">{{ user.name[:2].upper() }}</div>
+      <div>
+        <p class="sidebar-name">{{ user.name }}</p>
+        <p class="sidebar-zone">{{ user.organisation[:28] }}{% if user.organisation|length > 28 %}…{% endif %}</p>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="sidebar-link active" href="{{ url_for('utility_dashboard') }}">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+        Network Overview
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M5 8.5l2 2 4-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Kiosk Management
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12l3-5 3 3 3-6 3 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Analytics
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L2 5v4c0 3 2.4 5.7 6 6.3C11.6 14.7 14 12 14 9V5L8 2z" stroke="currentColor" stroke-width="1.5"/></svg>
+        Alerts
+      </a>
+      <a class="sidebar-link" href="#">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Reports
+      </a>
+    </nav>
+    <a class="sidebar-logout" href="{{ url_for('logout') }}">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 7h7M9 4l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 2H3a1 1 0 00-1 1v8a1 1 0 001 1h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Logout
+    </a>
+  </aside>
+
+  <!-- Main -->
+  <main class="dash-main">
+    <div class="dash-top">
+      <div>
+        <h2 class="dash-title">Network Operations Center</h2>
+        <p class="dash-sub">{{ user.organisation }} · Lusaka Zone B · Live View</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="live-badge">● LIVE</span>
+        {% if stats.alerts %}
+        <span class="alert-badge">{{ stats.alerts|length }} Active Alert{{ 's' if stats.alerts|length > 1 }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpi-row">
+      <div class="kpi-card teal-kpi">
+        <div class="kpi-label">Network Efficiency</div>
+        <div class="kpi-value">{{ stats.efficiency }}%</div>
+        <div class="kpi-sub">↑ 3.2% from last week</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Active Kiosks</div>
+        <div class="kpi-value">{{ stats.active_kiosks }}</div>
+        <div class="kpi-sub">of 16 total units</div>
+      </div>
+      <div class="kpi-card danger-kpi">
+        <div class="kpi-label">Alert Kiosks</div>
+        <div class="kpi-value" style="color:#ef4444">{{ stats.alert_kiosks }}</div>
+        <div class="kpi-sub">Immediate attention needed</div>
+      </div>
+      <div class="kpi-card warning-kpi">
+        <div class="kpi-label">Low Flow Units</div>
+        <div class="kpi-value" style="color:#f59e0b">{{ stats.low_flow_kiosks }}</div>
+        <div class="kpi-sub">Monitoring in progress</div>
+      </div>
+    </div>
+
+    <!-- Alerts + Consumption -->
+    <div class="dash-mid">
+
+      <div class="alerts-panel">
+        <h3 class="panel-title">Live Anomaly Alerts</h3>
+        {% for alert in stats.alerts %}
+        <div class="alert-item {% if alert.level == 'danger' %}alert-danger{% else %}alert-warning{% endif %}">
+          <div class="alert-icon">
+            {% if alert.level == 'danger' %}
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13.5 12H0.5L7 1Z" stroke="#ef4444" stroke-width="1.4"/><path d="M7 5v3M7 10v.5" stroke="#ef4444" stroke-width="1.4" stroke-linecap="round"/></svg>
+            {% else %}
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#f59e0b" stroke-width="1.4"/><path d="M7 4v3M7 9v.5" stroke="#f59e0b" stroke-width="1.4" stroke-linecap="round"/></svg>
+            {% endif %}
+          </div>
+          <div>
+            <p class="alert-title">{{ alert.title }}</p>
+            <p class="alert-body">{{ alert.body }}</p>
+          </div>
+        </div>
+        {% endfor %}
+        <div class="alert-item alert-success">
+          <div class="alert-icon">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#22c55e" stroke-width="1.4"/><path d="M4 7l2 2 4-4" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <p class="alert-title">Network Healthy</p>
+            <p class="alert-body">Overall efficiency at {{ stats.efficiency }}% — up 3.2% from last week.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="consumption-panel">
+        <h3 class="panel-title">Zone Consumption (Today)</h3>
+        {% for zone in stats.zones %}
+        <div class="zone-bar">
+          <span class="zone-label">{{ zone.name }}</span>
+          <div class="zone-track">
+            <div class="zone-fill" style="width:{{ zone.consumption_pct }}%;
+              background: {% if zone.consumption_pct >= 80 %}#0E9B8A{% elif zone.consumption_pct >= 60 %}#38bdf8{% else %}#7ee8dc{% endif %}">
+            </div>
+          </div>
+          <span class="zone-val">{{ zone.consumption_pct }}%</span>
+        </div>
+        {% endfor %}
+
+        <div class="network-map-placeholder">
+          <div class="map-header">Live Network Map</div>
+          <div class="map-body">
+            <div class="map-node green-node" style="top:28%;left:22%">K02</div>
+            <div class="map-node green-node" style="top:55%;left:58%">K05</div>
+            <div class="map-node red-node pulsing" style="top:42%;left:40%">K04</div>
+            <div class="map-node yellow-node" style="top:20%;left:65%">K09</div>
+            <div class="map-node green-node" style="top:68%;left:28%">K11</div>
+            <div class="map-legend">
+              <span class="legend-dot" style="background:#4ade80"></span>OK (14)
+              <span class="legend-dot" style="background:#f87171;margin-left:10px"></span>Alert (1)
+              <span class="legend-dot" style="background:#fbbf24;margin-left:10px"></span>Low (1)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue trend placeholder -->
+    <div class="dash-chart-panel">
+      <h3 class="panel-title">Revenue Collection (ZMW) — Last 7 Days</h3>
+      <div class="chart-bars">
+        {% set days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}
+        {% set vals = [4200, 3800, 5100, 4700, 6200, 3100, 2800] %}
+        {% for i in range(7) %}
+        <div class="chart-col">
+          <div class="chart-bar-wrap">
+            <div class="chart-bar teal-bar" style="height:{{ (vals[i] / 6200 * 100)|int }}%" title="ZMW {{ vals[i] }}">
+              <span class="chart-val">{{ vals[i]|int }}</span>
+            </div>
+          </div>
+          <div class="chart-day">{{ days[i] }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}
