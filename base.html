@@ -1,104 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}Maji-Flow — Smart Water Management{% endblock %}</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-{% block extra_css %}{% endblock %}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Maji Flow{% endblock %} — Smart Water Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+  {% block extra_css %}{% endblock %}
 </head>
 <body>
 
-<nav class="navbar">
-  <a class="logo" href="{{ url_for('home') }}">
-    <div class="logo-drop">
-      <svg viewBox="0 0 14 14" width="14" height="14" fill="none">
-        <path d="M7 2C7 2 3 5.5 3 8.5C3 10.93 4.79 12.5 7 12.5C9.21 12.5 11 10.93 11 8.5C11 5.5 7 2 7 2Z" fill="white"/>
-      </svg>
-    </div>
-    Maji-Flow
-  </a>
+  <!-- ── Navigation ── -->
+  <nav class="navbar">
+    <a class="nav-brand" href="{{ url_for('home') }}">
+      <span class="brand-drop">💧</span> Maji Flow
+    </a>
 
-  <div class="nav-links">
-    <a href="{{ url_for('home') }}#solution">Our Solution</a>
-    <a href="{{ url_for('home') }}#impact">Impact</a>
-    <a href="{{ url_for('home') }}#contact">Contact</a>
-  </div>
-
-  <div class="nav-right">
-    {% if session.get('user_email') %}
-      <span class="nav-greeting">Hi, {{ session.get('user_name', '').split()[0] }}</span>
-      {% if session.get('user_type') == 'utility' %}
-        <a class="btn-ghost" href="{{ url_for('utility_dashboard') }}">Dashboard</a>
+    <div class="nav-links">
+      {% if session.get('user_email') %}
+        <span class="nav-user">{{ session.get('user_name', '') }}</span>
+        <span class="nav-role-badge nav-role-{{ session.get('user_role') }}">
+          {{ session.get('user_role', '') | capitalize }}
+        </span>
+        <a class="nav-btn nav-btn-ghost" href="{{ url_for('logout') }}">Logout</a>
       {% else %}
-        <a class="btn-ghost" href="{{ url_for('resident_dashboard') }}">My Account</a>
+        <a class="nav-btn nav-btn-ghost" href="{{ url_for('login') }}">Login</a>
+        <a class="nav-btn nav-btn-primary" href="{{ url_for('register') }}">Register</a>
       {% endif %}
-      <a class="btn-teal" href="{{ url_for('logout') }}">Logout</a>
-    {% else %}
-      <a class="btn-ghost" href="{{ url_for('login') }}">Login</a>
-      <a class="btn-teal" href="{{ url_for('register') }}">Register</a>
-      <a class="btn-teal btn-demo" href="{{ url_for('register') }}">Request Demo</a>
+    </div>
+  </nav>
+
+  <!-- ── Flash messages ── -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
     {% endif %}
-  </div>
-</nav>
+  {% endwith %}
 
-{% block content %}{% endblock %}
+  <!-- ── Page content ── -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
 
-<footer>
-  <div class="footer-grid">
-    <div>
-      <div class="footer-logo">
-        <div class="logo-drop">
-          <svg viewBox="0 0 14 14" width="16" height="16" fill="none">
-            <path d="M7 2C7 2 3 5.5 3 8.5C3 10.93 4.79 12.5 7 12.5C9.21 12.5 11 10.93 11 8.5C11 5.5 7 2 7 2Z" fill="white"/>
-          </svg>
-        </div>
-        Maji-Flow
-      </div>
-      <p class="footer-desc">Smart water management for sustainable Zambian cities. IoT · AI · Mobile Money.</p>
-      <p class="footer-address">Plot 14B, Addis Ababa Drive<br>Longacres, Lusaka 10101, Zambia<br>info@majiflow.co.zm · +260 211 000 000</p>
-      <div class="social-row">
-        <div class="social-btn">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2h3l1.5 3.5-2 1C5.5 8.5 5.5 8.5 7.5 10.5l1-2L12 10v3c-5.5.5-11-5-10-11Z" stroke="#94a3b8" stroke-width="1.2"/></svg>
-        </div>
-        <div class="social-btn">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="3" stroke="#94a3b8" stroke-width="1.2"/><circle cx="7" cy="7" r="2.5" stroke="#94a3b8" stroke-width="1.2"/></svg>
-        </div>
-        <div class="social-btn">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M2 8h7" stroke="#94a3b8" stroke-width="1.2" stroke-linecap="round"/></svg>
-        </div>
-      </div>
-    </div>
-    <div class="footer-col">
-      <h5>Company</h5>
-      <a href="#">About Us</a>
-      <a href="#">Careers</a>
-      <a href="#">Press</a>
-      <a href="#">Blog</a>
-    </div>
-    <div class="footer-col">
-      <h5>Product</h5>
-      <a href="#">Our Solution</a>
-      <a href="#">Pricing</a>
-      <a href="#">Case Studies</a>
-      <a href="#">FAQ</a>
-    </div>
-    <div class="footer-col">
-      <h5>Support</h5>
-      <a href="#">Help Centre</a>
-      <a href="#">Documentation</a>
-      <a href="#">Privacy Policy</a>
-      <a href="#">Terms of Use</a>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <p>&copy; 2026 Maji-Flow Technologies Ltd. All rights reserved.</p>
-    <p class="footer-reg">Registered in Zambia · VAT No. ZM-4401-2024</p>
-  </div>
-</footer>
+  <!-- ── Footer ── -->
+  <footer class="site-footer">
+    <span>© 2026 Maji Flow · Lusaka Water Smart City Initiative</span>
+    <span>Powered by LWSC &amp; Community Tech</span>
+  </footer>
 
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-{% block extra_js %}{% endblock %}
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
 </body>
 </html>
