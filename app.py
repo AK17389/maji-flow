@@ -1,266 +1,374 @@
-"""
-Maji Flow - Smart Water Management System
-Flask Backend Application
-"""
+# ============================================================
+# Maji Flow - Smart Water Management System
+# Flask Backend - app.py
+#
+# Run with: python app.py
+# ============================================================
 
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import (
+    Flask, render_template, request, redirect,
+    url_for, session, jsonify, flash
+)
 from functools import wraps
-from datetime import datetime
+import os
 import random
+import string
+from datetime import datetime
 
+# ============================================================
+# App Configuration
+# ============================================================
 app = Flask(__name__)
-app.secret_key = "majiflow-secret-key-2026"  # Change this in production
+app.secret_key = os.environ.get('SECRET_KEY', 'maji-flow-secret-key-2024')
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-# ---------------------------------------------------------------------------
-# Demo Users (hardcoded for prototype)
-# ---------------------------------------------------------------------------
+# ============================================================
+# Demo Users (hardcoded as per requirements)
+# In production: replace with database (SQLAlchemy + PostgreSQL)
+# ============================================================
 USERS = {
-    "resident@majiflow.co.zm": {
-        "password": "water123",
-        "role": "resident",
-        "name": "Chanda Mutale",
-        "account_number": "MF-2024-00142",
-        "balance": 45.50,
-        "usage_today": 12.3,
-        "usage_month": 340.8,
+    'resident@majiflow.co.zm': {
+        'password': 'water123',
+        'role': 'resident',
+        'name': 'Chanda Mwale',
+        'account_number': 'MF-2024-0042',
+        'meter_number': 'MTR-LK-1198',
+        'balance': 125.50,
+        'zone': 'Lusaka East',
     },
-    "utility@lwsc.co.zm": {
-        "password": "lwsc2026",
-        "role": "utility",
-        "name": "LWSC Admin",
-        "account_number": "LWSC-ADMIN-001",
+    'utility@lwsc.co.zm': {
+        'password': 'lwsc2026',
+        'role': 'utility',
+        'name': 'Ngosa Banda',
+        'zone': 'All Zones',
     },
 }
 
-# ---------------------------------------------------------------------------
-# Sample data for API endpoints
-# ---------------------------------------------------------------------------
+# ============================================================
+# Mock kiosk data (simulates database / IoT sensor feed)
+# ============================================================
 KIOSKS = [
-    {"id": "K001", "name": "Mtendere Kiosk", "location": "Mtendere East", "status": "online",  "pressure": 3.2, "flow_rate": 18.5, "last_updated": "2026-04-07 08:12"},
-    {"id": "K002", "name": "Chawama Kiosk",  "location": "Chawama",       "status": "online",  "pressure": 2.9, "flow_rate": 15.1, "last_updated": "2026-04-07 08:10"},
-    {"id": "K003", "name": "Kanyama Kiosk",  "location": "Kanyama",       "status": "offline", "pressure": 0.0, "flow_rate": 0.0,  "last_updated": "2026-04-07 07:45"},
-    {"id": "K004", "name": "Bauleni Kiosk",  "location": "Bauleni",       "status": "online",  "pressure": 3.5, "flow_rate": 21.0, "last_updated": "2026-04-07 08:14"},
-    {"id": "K005", "name": "Chelstone Kiosk","location": "Chelstone",     "status": "warning", "pressure": 1.8, "flow_rate": 8.2,  "last_updated": "2026-04-07 08:00"},
+    {'id': 'K001', 'name': 'Kalingalinga Kiosk A', 'location': 'Kalingalinga Market',
+     'zone': 'Lusaka East', 'status': 'online', 'flow_rate': 12.4,
+     'pressure': 2.8, 'daily_volume': 14880, 'last_updated': '2 min ago'},
+    {'id': 'K002', 'name': 'Matero Main Kiosk', 'location': 'Matero Township',
+     'zone': 'Lusaka West', 'status': 'online', 'flow_rate': 9.8,
+     'pressure': 2.6, 'daily_volume': 11760, 'last_updated': '1 min ago'},
+    {'id': 'K003', 'name': 'Chawama Kiosk 1', 'location': 'Chawama Compound',
+     'zone': 'Lusaka South', 'status': 'maintenance', 'flow_rate': 0,
+     'pressure': 0, 'daily_volume': 0, 'last_updated': '3 hrs ago'},
+    {'id': 'K004', 'name': 'Kanyama North Kiosk', 'location': 'Kanyama Township',
+     'zone': 'Lusaka West', 'status': 'online', 'flow_rate': 11.2,
+     'pressure': 2.9, 'daily_volume': 13440, 'last_updated': '5 min ago'},
+    {'id': 'K005', 'name': 'Chelstone Kiosk', 'location': 'Chelstone Road',
+     'zone': 'Lusaka East', 'status': 'online', 'flow_rate': 8.6,
+     'pressure': 2.5, 'daily_volume': 10320, 'last_updated': '3 min ago'},
+    {'id': 'K006', 'name': 'Mtendere Kiosk B', 'location': 'Mtendere East',
+     'zone': 'Lusaka East', 'status': 'offline', 'flow_rate': 0,
+     'pressure': 0, 'daily_volume': 0, 'last_updated': '2 hrs ago'},
+    {'id': 'K007', 'name': "Ng'ombe Kiosk", 'location': "Ng'ombe Compound",
+     'zone': 'Lusaka North', 'status': 'online', 'flow_rate': 10.1,
+     'pressure': 2.7, 'daily_volume': 12120, 'last_updated': '1 min ago'},
+    {'id': 'K008', 'name': 'Misisi Kiosk', 'location': 'Misisi Compound',
+     'zone': 'Lusaka South', 'status': 'online', 'flow_rate': 7.9,
+     'pressure': 2.4, 'daily_volume': 9480, 'last_updated': '4 min ago'},
 ]
 
-USAGE_HISTORY = [
-    {"day": "Mon", "usage": 28.4},
-    {"day": "Tue", "usage": 31.2},
-    {"day": "Wed", "usage": 27.8},
-    {"day": "Thu", "usage": 33.5},
-    {"day": "Fri", "usage": 29.1},
-    {"day": "Sat", "usage": 35.6},
-    {"day": "Sun", "usage": 22.3},
-]
-
-# ---------------------------------------------------------------------------
-# Auth helpers / decorators
-# ---------------------------------------------------------------------------
-
+# ============================================================
+# Auth Decorators (Role-based access control)
+# ============================================================
 def login_required(f):
     """Redirect to login if user is not authenticated."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        if "user_email" not in session:
-            return redirect(url_for("login"))
+        if 'user_email' not in session:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated
 
 
 def role_required(role):
-    """Restrict a route to a specific role."""
+    """Restrict access to a specific user role."""
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):
-            if "user_email" not in session:
-                return redirect(url_for("login"))
-            if session.get("user_role") != role:
-                return redirect(url_for("home"))
+            if 'user_email' not in session:
+                return redirect(url_for('login'))
+            user = USERS.get(session['user_email'])
+            if not user or user['role'] != role:
+                flash('Access denied: insufficient permissions.', 'error')
+                return redirect(url_for('index'))
             return f(*args, **kwargs)
         return decorated
     return decorator
 
 
-# ---------------------------------------------------------------------------
-# Page routes
-# ---------------------------------------------------------------------------
-
-@app.route("/")
-def home():
-    """Landing page — redirect logged-in users to their dashboard."""
-    if "user_email" in session:
-        if session["user_role"] == "resident":
-            return redirect(url_for("resident_dashboard"))
-        return redirect(url_for("utility_dashboard"))
-    return render_template("index.html")
+# ============================================================
+# Helper: get current user from session
+# ============================================================
+def get_current_user():
+    email = session.get('user_email')
+    if email and email in USERS:
+        user = USERS[email].copy()
+        user['email'] = email
+        return user
+    return None
 
 
-@app.route("/login", methods=["GET", "POST"])
+# ============================================================
+# ROUTES
+# ============================================================
+
+# GET / → Landing page (index.html)
+@app.route('/')
+def index():
+    user = get_current_user()
+    if user:
+        # Already logged in - redirect to correct dashboard
+        if user['role'] == 'utility':
+            return redirect(url_for('utility_dashboard'))
+        return redirect(url_for('resident_dashboard'))
+    return render_template('index.html')
+
+
+# GET /login → Show login form
+# POST /login → Process login
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Handle login form submission."""
-    error = None
+    # Already logged in
+    user = get_current_user()
+    if user:
+        return redirect(url_for('resident_dashboard' if user['role'] == 'resident' else 'utility_dashboard'))
 
-    if request.method == "POST":
-        email    = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
 
-        user = USERS.get(email)
-        if user and user["password"] == password:
-            # Store safe user info in session
-            session["user_email"] = email
-            session["user_role"]  = user["role"]
-            session["user_name"]  = user["name"]
+        # Validate credentials
+        user_data = USERS.get(email)
+        if user_data and user_data['password'] == password:
+            # Create session
+            session['user_email'] = email
+            session['user_role'] = user_data['role']
+            session['user_name'] = user_data['name']
 
-            if user["role"] == "resident":
-                return redirect(url_for("resident_dashboard"))
-            return redirect(url_for("utility_dashboard"))
+            # Role-based redirect
+            if user_data['role'] == 'utility':
+                return redirect(url_for('utility_dashboard'))
+            return redirect(url_for('resident_dashboard'))
         else:
-            error = "Invalid email or password. Please try again."
+            flash('Invalid email or password. Please try again.', 'error')
 
-    return render_template("login.html", error=error)
+    return render_template('login.html')
 
 
-@app.route("/register", methods=["GET", "POST"])
+# GET /register → Show registration form
+# POST /register → Process registration
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    """Simple registration page (mock — does not persist data)."""
-    success = None
-    error   = None
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        confirm = request.form.get('confirm_password', '')
+        role = request.form.get('role', 'resident')
 
-    if request.method == "POST":
-        name     = request.form.get("name", "").strip()
-        email    = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-        role     = request.form.get("role", "resident")
-
+        # Validation
         if not name or not email or not password:
-            error = "All fields are required."
-        elif email in USERS:
-            error = "An account with this email already exists."
-        else:
-            # In a real app, save to database. Here we just confirm.
-            success = f"Account created for {name}! You can now log in with the demo credentials."
+            flash('All fields are required.', 'error')
+            return render_template('register.html')
 
-    return render_template("register.html", success=success, error=error)
+        if password != confirm:
+            flash('Passwords do not match.', 'error')
+            return render_template('register.html')
+
+        if len(password) < 6:
+            flash('Password must be at least 6 characters.', 'error')
+            return render_template('register.html')
+
+        if email in USERS:
+            flash('An account with this email already exists.', 'error')
+            return render_template('register.html')
+
+        # Create new user (in production: save to DB)
+        USERS[email] = {
+            'password': password,
+            'role': role,
+            'name': name,
+            'account_number': f'MF-2024-{random.randint(1000, 9999)}',
+            'meter_number': f'MTR-LK-{random.randint(1000, 9999)}',
+            'balance': 0.0,
+            'zone': 'Lusaka Central',
+        }
+
+        # Auto-login after registration
+        session['user_email'] = email
+        session['user_role'] = role
+        session['user_name'] = name
+
+        flash(f'Welcome to Maji Flow, {name}!', 'success')
+        return redirect(url_for('utility_dashboard' if role == 'utility' else 'resident_dashboard'))
+
+    return render_template('register.html')
 
 
-@app.route("/logout")
+# GET /logout → Clear session and redirect to home
+@app.route('/logout')
 def logout():
-    """Clear session and redirect to home."""
     session.clear()
-    return redirect(url_for("home"))
+    flash('You have been logged out successfully.', 'info')
+    return redirect(url_for('index'))
 
 
-@app.route("/resident")
-@role_required("resident")
+# GET /dashboard → Resident dashboard (protected)
+@app.route('/dashboard')
+@login_required
+@role_required('resident')
 def resident_dashboard():
-    """Resident dashboard — shows personal water usage & balance."""
-    user = USERS[session["user_email"]]
+    user = get_current_user()
+    # Get nearby kiosks for this user's zone
+    nearby_kiosks = [k for k in KIOSKS if k['zone'] == user.get('zone', '')]
     return render_template(
-        "resident_dashboard.html",
+        'resident_dashboard.html',
         user=user,
-        usage_history=USAGE_HISTORY,
+        kiosks=nearby_kiosks[:4],
     )
 
 
-@app.route("/utility")
-@role_required("utility")
+# GET /utility → Utility dashboard (protected, utility role only)
+@app.route('/utility')
+@login_required
+@role_required('utility')
 def utility_dashboard():
-    """Utility dashboard — shows network-wide stats & kiosk map."""
-    online  = sum(1 for k in KIOSKS if k["status"] == "online")
-    offline = sum(1 for k in KIOSKS if k["status"] == "offline")
-    warning = sum(1 for k in KIOSKS if k["status"] == "warning")
+    user = get_current_user()
+    active_kiosks = [k for k in KIOSKS if k['status'] == 'online']
     return render_template(
-        "utility_dashboard.html",
+        'utility_dashboard.html',
+        user=user,
         kiosks=KIOSKS,
-        online=online,
-        offline=offline,
-        warning=warning,
-        total=len(KIOSKS),
+        active_count=len(active_kiosks),
+        total_count=len(KIOSKS),
     )
 
 
-# ---------------------------------------------------------------------------
-# API endpoints
-# ---------------------------------------------------------------------------
+# ============================================================
+# API ENDPOINTS
+# ============================================================
 
-@app.route("/api/topup", methods=["POST"])
+# POST /api/topup → Add water credits to resident account
+@app.route('/api/topup', methods=['POST'])
 @login_required
 def api_topup():
-    """Simulate adding water credit to a resident account."""
-    data   = request.get_json(silent=True) or {}
-    amount = float(data.get("amount", 0))
+    """Simulate adding water credit to a resident's account."""
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
 
-    if amount <= 0:
-        return jsonify({"success": False, "message": "Amount must be greater than 0."}), 400
+    amount = data.get('amount')
+    method = data.get('method', 'mobile_money')
 
-    email = session["user_email"]
-    if email in USERS and "balance" in USERS[email]:
-        USERS[email]["balance"] = round(USERS[email]["balance"] + amount, 2)
-        new_balance = USERS[email]["balance"]
-        return jsonify({
-            "success": True,
-            "message": f"Successfully topped up K{amount:.2f}.",
-            "new_balance": new_balance,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        })
+    # Validate amount
+    try:
+        amount = float(amount)
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'error': 'Invalid amount'}), 400
 
-    return jsonify({"success": False, "message": "Top-up not available for this account."}), 403
+    if amount < 5:
+        return jsonify({'success': False, 'error': 'Minimum top-up is ZMW 5.00'}), 400
+
+    if amount > 500:
+        return jsonify({'success': False, 'error': 'Maximum top-up is ZMW 500.00'}), 400
+
+    # Update balance in session (in production: update DB)
+    email = session.get('user_email')
+    if email in USERS:
+        USERS[email]['balance'] = USERS[email].get('balance', 0) + amount
+
+    # Generate transaction reference
+    reference = 'MF' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=9))
+
+    return jsonify({
+        'success': True,
+        'message': f'ZMW {amount:.2f} added successfully',
+        'new_balance': USERS[email]['balance'],
+        'credits_added': amount,
+        'reference': reference,
+        'method': method,
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    })
 
 
-@app.route("/api/kiosks")
+# GET /api/kiosks → Return all kiosk data as JSON
+@app.route('/api/kiosks')
 @login_required
 def api_kiosks():
-    """Return all kiosk data as JSON."""
-    # Slightly randomise live readings to simulate real-time data
-    live = []
+    """Return kiosk network data. Simulates real-time IoT sensor feed."""
+    # Add slight random variation to simulate live data
+    live_kiosks = []
     for k in KIOSKS:
-        entry = dict(k)
-        if entry["status"] == "online":
-            entry["pressure"]  = round(entry["pressure"]  + random.uniform(-0.2, 0.2), 2)
-            entry["flow_rate"] = round(entry["flow_rate"] + random.uniform(-1.0, 1.0), 1)
-        entry["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M")
-        live.append(entry)
-    return jsonify({"success": True, "kiosks": live})
+        kiosk = k.copy()
+        if k['status'] == 'online':
+            kiosk['flow_rate'] = round(k['flow_rate'] + random.uniform(-0.3, 0.3), 1)
+            kiosk['pressure'] = round(k['pressure'] + random.uniform(-0.05, 0.05), 2)
+        live_kiosks.append(kiosk)
+
+    return jsonify({
+        'success': True,
+        'count': len(live_kiosks),
+        'kiosks': live_kiosks,
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    })
 
 
-@app.route("/api/network-stats")
+# GET /api/network-stats → Return network statistics
+@app.route('/api/network-stats')
 @login_required
 def api_network_stats():
-    """Return high-level network statistics as JSON."""
-    online_count = sum(1 for k in KIOSKS if k["status"] == "online")
-    stats = {
-        "success": True,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "total_kiosks": len(KIOSKS),
-        "online_kiosks": online_count,
-        "offline_kiosks": sum(1 for k in KIOSKS if k["status"] == "offline"),
-        "warning_kiosks": sum(1 for k in KIOSKS if k["status"] == "warning"),
-        "avg_pressure_bar": round(
-            sum(k["pressure"] for k in KIOSKS if k["status"] == "online") / max(online_count, 1), 2
-        ),
-        "total_flow_lpm": round(
-            sum(k["flow_rate"] for k in KIOSKS if k["status"] == "online"), 1
-        ),
-        "daily_distribution_m3": round(random.uniform(820, 950), 1),
-        "network_uptime_pct": round((online_count / len(KIOSKS)) * 100, 1),
-        "alerts": [
-            {"level": "warning", "message": "Chelstone Kiosk: Low pressure detected", "time": "08:00"},
-            {"level": "info",    "message": "Kanyama Kiosk: Scheduled maintenance",   "time": "07:45"},
+    """Return aggregated network statistics for the utility dashboard."""
+    active = [k for k in KIOSKS if k['status'] == 'online']
+    offline = [k for k in KIOSKS if k['status'] == 'offline']
+    maintenance = [k for k in KIOSKS if k['status'] == 'maintenance']
+
+    # Calculate aggregates
+    total_volume = sum(k['daily_volume'] for k in active)
+    avg_pressure = round(sum(k['pressure'] for k in active) / len(active), 2) if active else 0
+    avg_flow = round(sum(k['flow_rate'] for k in active) / len(active), 1) if active else 0
+
+    return jsonify({
+        'success': True,
+        'total_kiosks': len(KIOSKS),
+        'active_kiosks': len(active),
+        'offline_kiosks': len(offline),
+        'maintenance_kiosks': len(maintenance),
+        'total_daily_volume': total_volume + random.randint(-500, 500),
+        'avg_pressure': avg_pressure,
+        'avg_flow_rate': avg_flow,
+        'water_quality_index': 94,
+        'network_efficiency': round((len(active) / len(KIOSKS)) * 100, 1),
+        'alerts': [
+            {'id': 'ALT001', 'type': 'warning', 'message': 'Low pressure detected',
+             'location': 'Chelstone Kiosk', 'timestamp': '14:32', 'resolved': False},
+            {'id': 'ALT002', 'type': 'error', 'message': 'Kiosk offline - no signal',
+             'location': 'Mtendere Kiosk B', 'timestamp': '12:15', 'resolved': False},
+            {'id': 'ALT003', 'type': 'warning', 'message': 'Scheduled maintenance in progress',
+             'location': 'Chawama Kiosk 1', 'timestamp': '09:00', 'resolved': False},
         ],
-    }
-    return jsonify(stats)
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    })
 
 
-@app.route("/api/usage-history")
-@login_required
-def api_usage_history():
-    """Return weekly usage history for the logged-in resident."""
-    return jsonify({"success": True, "history": USAGE_HISTORY})
-
-
-# ---------------------------------------------------------------------------
-# Run
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+# ============================================================
+# Run the app
+# ============================================================
+if __name__ == '__main__':
+    print('\n' + '='*50)
+    print(' Maji Flow - Smart Water Management System')
+    print('='*50)
+    print(' Running at: http://127.0.0.1:5000')
+    print(' Demo Users:')
+    print('   Resident: resident@majiflow.co.zm / water123')
+    print('   Utility:  utility@lwsc.co.zm / lwsc2026')
+    print('='*50 + '\n')
+    app.run(debug=True, host='0.0.0.0', port=5000)

@@ -1,60 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}Maji Flow{% endblock %} — Smart Water Management</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
-  {% block extra_css %}{% endblock %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Maji Flow{% endblock %} - Smart Water Management</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block head %}{% endblock %}
 </head>
 <body>
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button onclick="this.parentElement.remove()">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
-  <!-- ── Navigation ── -->
-  <nav class="navbar">
-    <a class="nav-brand" href="{{ url_for('home') }}">
-      <span class="brand-drop">💧</span> Maji Flow
-    </a>
-
-    <div class="nav-links">
-      {% if session.get('user_email') %}
-        <span class="nav-user">{{ session.get('user_name', '') }}</span>
-        <span class="nav-role-badge nav-role-{{ session.get('user_role') }}">
-          {{ session.get('user_role', '') | capitalize }}
-        </span>
-        <a class="nav-btn nav-btn-ghost" href="{{ url_for('logout') }}">Logout</a>
-      {% else %}
-        <a class="nav-btn nav-btn-ghost" href="{{ url_for('login') }}">Login</a>
-        <a class="nav-btn nav-btn-primary" href="{{ url_for('register') }}">Register</a>
-      {% endif %}
-    </div>
-  </nav>
-
-  <!-- ── Flash messages ── -->
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <div class="flash-container">
-        {% for category, message in messages %}
-          <div class="flash flash-{{ category }}">{{ message }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
-
-  <!-- ── Page content ── -->
-  <main>
+    <!-- Page content -->
     {% block content %}{% endblock %}
-  </main>
 
-  <!-- ── Footer ── -->
-  <footer class="site-footer">
-    <span>© 2026 Maji Flow · Lusaka Water Smart City Initiative</span>
-    <span>Powered by LWSC &amp; Community Tech</span>
-  </footer>
-
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-  {% block extra_js %}{% endblock %}
+    <!-- Main JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

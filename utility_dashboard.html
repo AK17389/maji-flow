@@ -1,164 +1,369 @@
-{% extends "base.html" %}
-{% block title %}Utility Dashboard{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Operations Center{% endblock %}
 
 {% block content %}
-<div class="dashboard-wrapper">
-
-  <!-- ── Header ── -->
-  <div class="dash-header">
-    <div>
-      <h2>Network Operations Centre ⚡</h2>
-      <p class="dash-sub">LWSC Lusaka Distribution Network · Live Monitoring</p>
-    </div>
-    <div class="dash-refresh">
-      <span id="last-refresh" class="text-muted"></span>
-      <button class="btn btn-ghost btn-sm" onclick="refreshAll()">↻ Refresh</button>
-    </div>
-  </div>
-
-  <!-- ── Network KPIs (populated via JS) ── -->
-  <div class="kpi-grid">
-    <div class="kpi-card kpi-online">
-      <div class="kpi-label">Online Kiosks</div>
-      <div class="kpi-value" id="stat-online">{{ online }}</div>
-      <div class="kpi-sub">of {{ total }} total</div>
-    </div>
-    <div class="kpi-card kpi-flow">
-      <div class="kpi-label">Total Flow</div>
-      <div class="kpi-value" id="stat-flow">—</div>
-      <div class="kpi-sub">Litres per minute</div>
-    </div>
-    <div class="kpi-card kpi-pressure">
-      <div class="kpi-label">Avg Pressure</div>
-      <div class="kpi-value" id="stat-pressure">—</div>
-      <div class="kpi-sub">Bar</div>
-    </div>
-    <div class="kpi-card kpi-uptime">
-      <div class="kpi-label">Network Uptime</div>
-      <div class="kpi-value" id="stat-uptime">—</div>
-      <div class="kpi-sub">% availability</div>
-    </div>
-  </div>
-
-  <!-- ── Alerts ── -->
-  <div class="panel" id="alerts-panel">
-    <h3>🔔 Active Alerts</h3>
-    <div id="alert-list"><div class="loading-spinner">Loading alerts…</div></div>
-  </div>
-
-  <!-- ── Status overview ── -->
-  <div class="kpi-grid kpi-grid--status">
-    <div class="status-chip status-chip--online">✅ Online: {{ online }}</div>
-    <div class="status-chip status-chip--warning">⚠️ Warning: {{ warning }}</div>
-    <div class="status-chip status-chip--offline">🔴 Offline: {{ offline }}</div>
-  </div>
-
-  <!-- ── Kiosk table ── -->
-  <div class="panel">
-    <h3>📡 Kiosk Network Status</h3>
-    <div class="table-scroll">
-      <table class="data-table" id="kiosk-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Location</th>
-            <th>Status</th>
-            <th>Pressure (bar)</th>
-            <th>Flow (L/min)</th>
-            <th>Last Updated</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Populated server-side for initial load -->
-          {% for k in kiosks %}
-          <tr>
-            <td><code>{{ k.id }}</code></td>
-            <td>{{ k.name }}</td>
-            <td>{{ k.location }}</td>
-            <td>
-              <span class="kiosk-badge kiosk-badge--{{ k.status }}">{{ k.status }}</span>
-            </td>
-            <td>{{ k.pressure if k.status != 'offline' else '—' }}</td>
-            <td>{{ k.flow_rate if k.status != 'offline' else '—' }}</td>
-            <td>{{ k.last_updated }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ── Daily distribution ── -->
-  <div class="panel">
-    <h3>🚰 Distribution Today</h3>
-    <div id="distribution-info" class="big-stat">
-      <span id="daily-dist">—</span>
-      <small>m³ distributed across the network today</small>
-    </div>
-  </div>
-
-</div>
-
-<script>
-document.addEventListener("DOMContentLoaded", refreshAll);
-
-async function refreshAll() {
-  await Promise.all([loadNetworkStats(), refreshKioskTable()]);
-}
-
-async function loadNetworkStats() {
-  try {
-    const res  = await fetch("{{ url_for('api_network_stats') }}");
-    const data = await res.json();
-    if (!data.success) return;
-
-    document.getElementById("stat-online").textContent    = data.online_kiosks;
-    document.getElementById("stat-flow").textContent      = data.total_flow_lpm + " L/min";
-    document.getElementById("stat-pressure").textContent  = data.avg_pressure_bar + " bar";
-    document.getElementById("stat-uptime").textContent    = data.network_uptime_pct + "%";
-    document.getElementById("daily-dist").textContent     = data.daily_distribution_m3;
-    document.getElementById("last-refresh").textContent   = "Updated " + data.timestamp;
-
-    // Render alerts
-    const alertList = document.getElementById("alert-list");
-    if (data.alerts && data.alerts.length) {
-      alertList.innerHTML = data.alerts.map(a => `
-        <div class="alert-item alert-item--${a.level}">
-          <span class="alert-level">${a.level === 'warning' ? '⚠️' : 'ℹ️'}</span>
-          <span class="alert-msg">${a.message}</span>
-          <span class="alert-time">${a.time}</span>
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo">
+                <div class="logo-icon">💧</div>
+                <div class="logo-text">
+                    <span class="logo-title">Maji Flow</span>
+                    <span class="logo-sub">Operations</span>
+                </div>
+            </div>
         </div>
-      `).join("");
-    } else {
-      alertList.innerHTML = "<p class='text-muted'>No active alerts.</p>";
+
+        <div class="sidebar-user">
+            <div class="user-avatar" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">{{ user.name[0] }}</div>
+            <div class="user-info">
+                <div class="user-name">{{ user.name }}</div>
+                <span class="badge" style="background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);">🛡️ Utility</span>
+            </div>
+        </div>
+
+        <!-- Network health -->
+        <div class="balance-card">
+            <div class="balance-label">Network Health</div>
+            <div class="balance-value" style="color:#10b981;" id="networkHealth">
+                {{ ((active_count / total_count) * 100)|round(1) }}%
+            </div>
+            <div class="progress-bar" style="margin-top:6px;">
+                <div class="progress-fill" id="healthBar" style="width: {{ ((active_count / total_count) * 100)|round(1) }}%"></div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-link active" onclick="showSection('overview', this)">🏠 <span>Overview</span></a>
+            <a href="#" class="nav-link" onclick="showSection('network', this)">🗺️ <span>Network Map</span></a>
+            <a href="#" class="nav-link" onclick="showSection('kiosks', this)">🗄️ <span>Kiosk Management</span></a>
+            <a href="#" class="nav-link" onclick="showSection('analytics', this)">📊 <span>Analytics</span></a>
+            <a href="#" class="nav-link" onclick="showSection('alerts', this)">🔔 <span>Alerts</span></a>
+            <a href="#" class="nav-link" onclick="showSection('settings', this)">⚙️ <span>Settings</span></a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{{ url_for('logout') }}" class="nav-link danger">🚪 <span>Sign Out</span></a>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="dashboard-main">
+        <header class="dash-header">
+            <div class="header-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <div class="header-title">LWSC Operations Center</div>
+                    <div class="header-sub">Lusaka Water &amp; Sewerage Company</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn-outline btn-sm" onclick="refreshAll()">🔄 Refresh</button>
+                <span class="badge badge-success">● Live Feed</span>
+            </div>
+        </header>
+
+        <div class="dash-content">
+
+            <!-- OVERVIEW -->
+            <div class="section" id="section-overview">
+                <h2>Network Overview</h2>
+                <p class="text-muted">Real-time status of Lusaka's water distribution network</p>
+
+                <div class="stat-grid-6">
+                    <div class="stat-card-dash">
+                        <div class="stat-icon" style="background:rgba(14,165,233,0.15);color:#0ea5e9">🗄️</div>
+                        <div class="stat-info"><div class="stat-label">Total Kiosks</div><div class="stat-value">{{ total_count }}</div></div>
+                    </div>
+                    <div class="stat-card-dash">
+                        <div class="stat-icon" style="background:rgba(16,185,129,0.15);color:#10b981">✅</div>
+                        <div class="stat-info"><div class="stat-label">Active</div><div class="stat-value" id="activeCount">{{ active_count }}</div></div>
+                    </div>
+                    <div class="stat-card-dash">
+                        <div class="stat-icon" style="background:rgba(239,68,68,0.15);color:#ef4444">❌</div>
+                        <div class="stat-info"><div class="stat-label">Offline</div><div class="stat-value" id="offlineCount">...</div></div>
+                    </div>
+                    <div class="stat-card-dash">
+                        <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b">⚠️</div>
+                        <div class="stat-info"><div class="stat-label">Maintenance</div><div class="stat-value" id="maintenanceCount">...</div></div>
+                    </div>
+                    <div class="stat-card-dash">
+                        <div class="stat-icon" style="background:rgba(6,182,212,0.15);color:#06b6d4">💧</div>
+                        <div class="stat-info"><div class="stat-label">Daily Volume</div><div class="stat-value" id="dailyVol">...</div></div>
+                    </div>
+                    <div class="stat-card-dash">
+                        <div class="stat-icon" style="background:rgba(139,92,246,0.15);color:#8b5cf6">🔔</div>
+                        <div class="stat-info"><div class="stat-label">Active Alerts</div><div class="stat-value" id="alertCount">...</div></div>
+                    </div>
+                </div>
+
+                <!-- Alerts preview -->
+                <div class="card" style="margin-top:20px;">
+                    <div class="card-header">
+                        <h3>Active Alerts</h3>
+                        <button class="btn-outline btn-sm" onclick="showSection('alerts', null)">View All</button>
+                    </div>
+                    <div id="alertsList">Loading...</div>
+                </div>
+            </div>
+
+            <!-- NETWORK MAP -->
+            <div class="section hidden" id="section-network">
+                <h2>Network Map</h2>
+                <div class="card">
+                    <div class="card-header">
+                        <span>Lusaka Distribution Network</span>
+                        <div id="mapLegend" style="display:flex;gap:12px;font-size:13px;">
+                            <span style="color:#10b981">● <span id="onlineCount">6</span> Online</span>
+                            <span style="color:#ef4444">● 1 Offline</span>
+                            <span style="color:#f59e0b">● 1 Maintenance</span>
+                        </div>
+                    </div>
+                    <!-- SVG network map -->
+                    <div class="network-map" id="networkMap">Loading map...</div>
+                </div>
+                <div class="stat-grid-4" style="margin-top:16px;" id="networkStats">Loading stats...</div>
+            </div>
+
+            <!-- KIOSK MANAGEMENT -->
+            <div class="section hidden" id="section-kiosks">
+                <div class="section-header">
+                    <h2>Kiosk Management</h2>
+                    <div style="display:flex;gap:8px;">
+                        <select id="zoneFilter" class="input-field" style="width:auto;" onchange="filterKiosks()">
+                            <option value="All">All Zones</option>
+                            <option>Lusaka East</option>
+                            <option>Lusaka West</option>
+                            <option>Lusaka South</option>
+                            <option>Lusaka North</option>
+                        </select>
+                        <select id="statusFilter" class="input-field" style="width:auto;" onchange="filterKiosks()">
+                            <option value="All">All Status</option>
+                            <option value="online">Online</option>
+                            <option value="offline">Offline</option>
+                            <option value="maintenance">Maintenance</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card" style="padding:0;overflow:hidden;">
+                    <table class="data-table" id="kioskTable">
+                        <thead><tr><th>ID</th><th>Name</th><th>Zone</th><th>Status</th><th>Flow Rate</th><th>Pressure</th><th>Daily Vol</th><th>Updated</th></tr></thead>
+                        <tbody id="kioskTableBody">Loading...</tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ANALYTICS -->
+            <div class="section hidden" id="section-analytics">
+                <h2>Network Analytics</h2>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div class="card">
+                        <h3>Distribution by Zone</h3>
+                        {% for zone, pct, color in [('Lusaka East', 35, '#0ea5e9'), ('Lusaka West', 28, '#06b6d4'), ('Lusaka South', 22, '#10b981'), ('Lusaka North', 15, '#8b5cf6')] %}
+                        <div style="margin-bottom:12px;">
+                            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+                                <span>{{ zone }}</span><span style="color:{{ color }}">{{ pct }}%</span>
+                            </div>
+                            <div class="progress-bar"><div class="progress-fill" style="width:{{ pct }}%;background:{{ color }}"></div></div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="card">
+                        <h3>Key Metrics</h3>
+                        {% for label, val in [('Peak Hour', '06:00-08:00'), ('Avg Daily Users', '1,240/kiosk'), ('Water Saved', '2,400 L vs last week'), ('Quality Index', '94 / 100 (WHO)'), ('Uptime SLA', '87.5% (target: 95%)')] %}
+                        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--color-border);font-size:14px;">
+                            <span style="color:var(--color-muted)">{{ label }}</span>
+                            <span style="font-weight:600">{{ val }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ALERTS -->
+            <div class="section hidden" id="section-alerts">
+                <h2>Alerts &amp; Incidents</h2>
+                <div id="fullAlertsList">Loading...</div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div class="section hidden" id="section-settings">
+                <h2>System Settings</h2>
+                {% for label, val, desc in [
+                    ('System Name', 'Maji Flow v2.0', 'Application identifier'),
+                    ('Operator', 'LWSC Zambia', 'Lusaka Water & Sewerage Company'),
+                    ('API Refresh Rate', '15 seconds', 'Network data polling interval'),
+                    ('Alert Threshold', 'Pressure < 2.0 bar', 'Auto-alert trigger'),
+                    ('Data Retention', '90 days', 'Historical data storage period')
+                ] %}
+                <div class="card" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-weight:600;margin-bottom:2px;">{{ label }}</div>
+                        <div style="font-size:13px;color:var(--color-muted)">{{ desc }}</div>
+                    </div>
+                    <div class="mono" style="background:var(--color-surface);padding:6px 12px;border-radius:8px;color:var(--color-primary);font-size:13px;">{{ val }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let allKiosks = [];
+
+    function showSection(id, link) {
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        document.getElementById('section-' + id).classList.remove('hidden');
+        if (link) link.classList.add('active');
+        if (id === 'kiosks') renderKioskTable(allKiosks);
+        if (id === 'network') renderNetworkMap();
+        return false;
     }
-  } catch (err) {
-    console.error("Failed to load network stats:", err);
-  }
-}
 
-async function refreshKioskTable() {
-  try {
-    const res  = await fetch("{{ url_for('api_kiosks') }}");
-    const data = await res.json();
-    if (!data.success) return;
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
 
-    const tbody = document.querySelector("#kiosk-table tbody");
-    tbody.innerHTML = data.kiosks.map(k => `
-      <tr>
-        <td><code>${k.id}</code></td>
-        <td>${k.name}</td>
-        <td>${k.location}</td>
-        <td><span class="kiosk-badge kiosk-badge--${k.status}">${k.status}</span></td>
-        <td>${k.status !== 'offline' ? k.pressure : '—'}</td>
-        <td>${k.status !== 'offline' ? k.flow_rate : '—'}</td>
-        <td>${k.last_updated}</td>
-      </tr>
-    `).join("");
-  } catch (err) {
-    console.error("Failed to refresh kiosk table:", err);
-  }
-}
+    // Fetch /api/network-stats
+    function loadNetworkStats() {
+        fetch('/api/network-stats')
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) return;
+                document.getElementById('offlineCount').textContent = data.offline_kiosks;
+                document.getElementById('maintenanceCount').textContent = data.maintenance_kiosks;
+                document.getElementById('dailyVol').textContent = (data.total_daily_volume / 1000).toFixed(1) + 'K L';
+                document.getElementById('alertCount').textContent = data.alerts.filter(a => !a.resolved).length;
+
+                // Render alerts
+                const alertsHtml = data.alerts.filter(a => !a.resolved).map(a => `
+                    <div class="alert-item ${a.type}" style="margin-bottom:8px;">
+                        <div class="alert-icon">${a.type === 'error' ? '❌' : a.type === 'warning' ? '⚠️' : 'ℹ️'}</div>
+                        <div class="alert-body">
+                            <div><b>${a.message}</b></div>
+                            <div class="alert-time">${a.location} &middot; ${a.timestamp}</div>
+                        </div>
+                        <span class="badge badge-${a.type === 'error' ? 'danger' : a.type === 'warning' ? 'warning' : 'info'}">${a.type}</span>
+                    </div>
+                `).join('');
+                document.getElementById('alertsList').innerHTML = alertsHtml || '<p style="color:var(--color-muted)">No active alerts.</p>';
+
+                // Full alerts list
+                if (document.getElementById('fullAlertsList')) {
+                    document.getElementById('fullAlertsList').innerHTML = data.alerts.map(a => `
+                        <div class="alert-item ${a.resolved ? 'resolved' : a.type}" style="margin-bottom:10px;opacity:${a.resolved ? 0.6 : 1};">
+                            <div class="alert-icon">${a.resolved ? '✅' : a.type === 'error' ? '❌' : '⚠️'}</div>
+                            <div class="alert-body" style="flex:1;">
+                                <div><b>${a.message}</b></div>
+                                <div class="alert-time">${a.location} &middot; ${a.timestamp}</div>
+                            </div>
+                            <span class="badge badge-${a.resolved ? 'success' : a.type === 'error' ? 'danger' : 'warning'}">${a.resolved ? 'Resolved' : a.type}</span>
+                        </div>
+                    `).join('');
+                }
+
+                // Network stats panel
+                if (document.getElementById('networkStats')) {
+                    document.getElementById('networkStats').innerHTML = [
+                        {label:'Avg Flow Rate', val: data.avg_flow_rate + ' L/min', color:'#0ea5e9'},
+                        {label:'Avg Pressure', val: data.avg_pressure + ' bar', color:'#06b6d4'},
+                        {label:'Total Volume', val: (data.total_daily_volume/1000).toFixed(1) + 'K L', color:'#10b981'},
+                        {label:'Quality Index', val: data.water_quality_index + ' / 100', color:'#8b5cf6'},
+                    ].map(s => `
+                        <div class="stat-card-dash" style="text-align:center;">
+                            <div class="stat-label">${s.label}</div>
+                            <div class="stat-value" style="color:${s.color}">${s.val}</div>
+                        </div>
+                    `).join('');
+                }
+            })
+            .catch(err => console.error('Stats error:', err));
+    }
+
+    // Fetch /api/kiosks
+    function loadKiosks() {
+        fetch('/api/kiosks')
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) return;
+                allKiosks = data.kiosks;
+                renderKioskTable(allKiosks);
+            });
+    }
+
+    function renderKioskTable(kiosks) {
+        const tbody = document.getElementById('kioskTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = kiosks.map(k => `
+            <tr>
+                <td class="mono" style="color:var(--color-primary)">${k.id}</td>
+                <td style="font-weight:500">${k.name}</td>
+                <td style="color:var(--color-muted);font-size:13px">${k.zone}</td>
+                <td><span class="badge badge-${k.status === 'online' ? 'success' : k.status === 'offline' ? 'danger' : 'warning'}">${k.status}</span></td>
+                <td class="mono">${k.flow_rate > 0 ? k.flow_rate + ' L/m' : '&mdash;'}</td>
+                <td class="mono">${k.pressure > 0 ? k.pressure + ' bar' : '&mdash;'}</td>
+                <td class="mono">${k.daily_volume > 0 ? k.daily_volume.toLocaleString() + ' L' : '&mdash;'}</td>
+                <td style="font-size:12px;color:var(--color-muted)">${k.last_updated}</td>
+            </tr>
+        `).join('');
+    }
+
+    function filterKiosks() {
+        const zone = document.getElementById('zoneFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        const filtered = allKiosks.filter(k =>
+            (zone === 'All' || k.zone === zone) &&
+            (status === 'All' || k.status === status)
+        );
+        renderKioskTable(filtered);
+    }
+
+    function renderNetworkMap() {
+        const map = document.getElementById('networkMap');
+        if (!map || allKiosks.length === 0) return;
+        // Simple SVG map
+        const svgKiosks = allKiosks.map((k, i) => {
+            const x = 60 + (i % 4) * 180;
+            const y = 80 + Math.floor(i / 4) * 120;
+            const color = k.status === 'online' ? '#10b981' : k.status === 'offline' ? '#ef4444' : '#f59e0b';
+            return `
+                <circle cx="${x}" cy="${y}" r="10" fill="${color}" opacity="0.8"/>
+                <text x="${x}" y="${y + 24}" text-anchor="middle" fill="#6b8fad" font-size="10">${k.id}</text>
+                ${k.status === 'online' ? `<circle cx="${x}" cy="${y}" r="18" fill="none" stroke="${color}" stroke-width="1" opacity="0.3"/>` : ''}
+            `;
+        }).join('');
+        map.innerHTML = `<svg width="100%" height="300" style="background:var(--color-surface);border-radius:12px;">
+            <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(14,165,233,0.08)" stroke-width="1"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)"/>
+            ${allKiosks.slice(0, -1).map((k, i) => {
+                const x1 = 60 + (i % 4) * 180, y1 = 80 + Math.floor(i / 4) * 120;
+                const x2 = 60 + ((i+1) % 4) * 180, y2 = 80 + Math.floor((i+1) / 4) * 120;
+                return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#1e3a5f" stroke-width="1.5" stroke-dasharray="6 3"/>`;
+            }).join('')}
+            ${svgKiosks}
+        </svg>`;
+    }
+
+    function refreshAll() {
+        loadKiosks();
+        loadNetworkStats();
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', function() {
+        loadKiosks();
+        loadNetworkStats();
+        setInterval(refreshAll, 15000);
+    });
 </script>
 {% endblock %}

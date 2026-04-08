@@ -1,126 +1,73 @@
-# 💧 Maji Flow — Smart Water Management System
+# React + TypeScript + Vite
 
-A Flask web application for smart water management in Lusaka, Zambia.
-Built for LWSC (Lusaka Water & Sewerage Company) community tech initiative.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
----
+Currently, two official plugins are available:
 
-## 📁 Project Structure
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-```
-maji-flow/
-├── app.py                        # Flask backend (routes, API, auth)
-├── requirements.txt              # Python dependencies
-├── README.md
-│
-├── templates/                    # Jinja2 HTML templates
-│   ├── base.html                 # Shared layout (navbar, footer)
-│   ├── index.html                # Landing page
-│   ├── login.html                # Login form
-│   ├── register.html             # Registration form
-│   ├── resident_dashboard.html   # Resident portal
-│   └── utility_dashboard.html   # Utility ops dashboard
-│
-└── static/
-    ├── css/
-    │   └── main.css              # All styles
-    └── js/
-        └── main.js               # Shared JS utilities
-```
+## React Compiler
 
----
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## 🚀 Running Locally
+## Expanding the ESLint configuration
 
-### Prerequisites
-- Python 3.8+ installed
-- pip available
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-### Steps
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-```bash
-# 1. Clone or navigate to the project folder
-cd maji-flow
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
-# 2. Create a virtual environment (recommended)
-python -m venv venv
-
-# Activate it:
-# macOS/Linux:
-source venv/bin/activate
-# Windows:
-venv\Scripts\activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Run the app
-python app.py
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
 
-Then open your browser at: **http://127.0.0.1:5000**
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
----
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-## 🔑 Demo Credentials
-
-| Role     | Email                       | Password  |
-|----------|-----------------------------|-----------|
-| Resident | resident@majiflow.co.zm     | water123  |
-| Utility  | utility@lwsc.co.zm          | lwsc2026  |
-
----
-
-## 📡 API Endpoints
-
-All endpoints require an active session (logged in).
-
-| Method | Endpoint              | Description                         |
-|--------|-----------------------|-------------------------------------|
-| POST   | `/api/topup`          | Add water credit `{"amount": 20}`   |
-| GET    | `/api/kiosks`         | Returns live kiosk JSON data        |
-| GET    | `/api/network-stats`  | Returns network health stats        |
-| GET    | `/api/usage-history`  | Returns resident's weekly usage     |
-
----
-
-## 🌐 Deploying to GitHub + Render (Free)
-
-### Step 1: Push to GitHub
-
-```bash
-# In the project root
-git init
-git add .
-git commit -m "Initial Maji Flow release"
-
-# Create a repo on GitHub, then:
-git remote add origin https://github.com/YOUR_USERNAME/maji-flow.git
-git branch -M main
-git push -u origin main
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
-
-### Step 2: Deploy on Render.com (free tier)
-
-1. Go to [render.com](https://render.com) → **New → Web Service**
-2. Connect your GitHub repo
-3. Set:
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `gunicorn app:app`
-4. Add to `requirements.txt`: `gunicorn==22.0.0`
-5. Click **Deploy**
-
-> ⚠️ Change `app.secret_key` to a strong random string before deploying to production.
-
----
-
-## 🔒 Security Notes (for production)
-
-- Replace hardcoded users with a real database (SQLite + SQLAlchemy)
-- Use `werkzeug.security.generate_password_hash` for passwords
-- Set `SECRET_KEY` as an environment variable
-- Enable HTTPS (Render handles this automatically)
-
----
-
-Built with ❤️ using Flask · Python · HTML/CSS/JS

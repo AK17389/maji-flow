@@ -1,165 +1,422 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block title %}My Dashboard{% endblock %}
 
 {% block content %}
-<div class="dashboard-wrapper">
-
-  <!-- ── Greeting ── -->
-  <div class="dash-header">
-    <div>
-      <h2>Good morning, {{ user.name.split()[0] }} 👋</h2>
-      <p class="dash-sub">Account <code>{{ user.account_number }}</code> · Real-time water data</p>
-    </div>
-    <div class="dash-refresh">
-      <button class="btn btn-ghost btn-sm" onclick="loadResidentData()">↻ Refresh</button>
-    </div>
-  </div>
-
-  <!-- ── KPI cards ── -->
-  <div class="kpi-grid">
-    <div class="kpi-card kpi-balance">
-      <div class="kpi-label">Credit Balance</div>
-      <div class="kpi-value" id="balance">K {{ "%.2f"|format(user.balance) }}</div>
-      <div class="kpi-sub">Available water credit</div>
-    </div>
-    <div class="kpi-card kpi-today">
-      <div class="kpi-label">Today's Usage</div>
-      <div class="kpi-value">{{ user.usage_today }} L</div>
-      <div class="kpi-sub">Litres consumed today</div>
-    </div>
-    <div class="kpi-card kpi-month">
-      <div class="kpi-label">Monthly Usage</div>
-      <div class="kpi-value">{{ user.usage_month }} L</div>
-      <div class="kpi-sub">April 2026 total</div>
-    </div>
-  </div>
-
-  <!-- ── Top-up panel ── -->
-  <div class="panel topup-panel">
-    <h3>💳 Top Up Credit</h3>
-    <p>Add water credit to your account instantly.</p>
-    <div class="topup-form">
-      <div class="topup-presets">
-        <button class="preset-btn" onclick="setTopup(10)">K10</button>
-        <button class="preset-btn" onclick="setTopup(20)">K20</button>
-        <button class="preset-btn" onclick="setTopup(50)">K50</button>
-        <button class="preset-btn" onclick="setTopup(100)">K100</button>
-      </div>
-      <div class="topup-custom">
-        <input
-          type="number"
-          id="topup-amount"
-          placeholder="Enter amount (K)"
-          min="1"
-          step="0.50"
-        />
-        <button class="btn btn-primary" onclick="doTopup()">Top Up</button>
-      </div>
-      <div id="topup-result" class="topup-result" style="display:none;"></div>
-    </div>
-  </div>
-
-  <!-- ── Weekly usage chart ── -->
-  <div class="panel">
-    <h3>📈 Weekly Usage (Litres)</h3>
-    <div class="bar-chart" id="usage-chart">
-      {% for d in usage_history %}
-        <div class="bar-group">
-          <div class="bar-fill" style="height: {{ (d.usage / 40 * 100)|round }}%;">
-            <span class="bar-val">{{ d.usage }}</span>
-          </div>
-          <div class="bar-label">{{ d.day }}</div>
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo">
+                <div class="logo-icon">💧</div>
+                <div class="logo-text">
+                    <span class="logo-title">Maji Flow</span>
+                    <span class="logo-sub">Smart Water</span>
+                </div>
+            </div>
         </div>
-      {% endfor %}
-    </div>
-  </div>
 
-  <!-- ── Nearby kiosks ── -->
-  <div class="panel">
-    <h3>🗺️ Nearby Kiosks</h3>
-    <div id="kiosk-list" class="kiosk-list">
-      <div class="loading-spinner">Loading kiosks…</div>
-    </div>
-  </div>
+        <!-- User info -->
+        <div class="sidebar-user">
+            <div class="user-avatar">{{ user.name[0] }}</div>
+            <div class="user-info">
+                <div class="user-name">{{ user.name }}</div>
+                <span class="badge badge-info">Resident</span>
+            </div>
+        </div>
+        <div class="balance-card">
+            <div class="balance-label">Water Credits</div>
+            <div class="balance-value" id="balanceDisplay">ZMW {{ '%.2f'|format(user.balance) }}</div>
+        </div>
 
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-link active" data-section="overview" onclick="showSection('overview', this)">
+                🏠 <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-link" data-section="topup" onclick="showSection('topup', this)">
+                💳 <span>Top Up Credits</span>
+            </a>
+            <a href="#" class="nav-link" data-section="kiosks" onclick="showSection('kiosks', this)">
+                📍 <span>Nearby Kiosks</span>
+            </a>
+            <a href="#" class="nav-link" data-section="usage" onclick="showSection('usage', this)">
+                📈 <span>Usage History</span>
+            </a>
+            <a href="#" class="nav-link" data-section="alerts" onclick="showSection('alerts', this)">
+                🔔 <span>Alerts</span>
+            </a>
+            <a href="#" class="nav-link" data-section="profile" onclick="showSection('profile', this)">
+                👤 <span>My Profile</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{{ url_for('logout') }}" class="nav-link danger">
+                🚪 <span>Sign Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Header -->
+        <header class="dash-header">
+            <div class="header-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <div class="header-title" id="pageTitle">Dashboard</div>
+                    <div class="header-sub">{{ user.zone }}</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn-outline btn-sm" onclick="refreshData()">🔄 Refresh</button>
+                <span class="badge badge-success">● Live</span>
+            </div>
+        </header>
+
+        <!-- Content sections -->
+        <div class="dash-content" id="dashContent">
+
+            <!-- OVERVIEW SECTION -->
+            <div class="section" id="section-overview">
+                <h2>Good day, {{ user.name.split(' ')[0] }}! 👋</h2>
+                <p class="text-muted">Account: {{ user.account_number }} &middot; Meter: {{ user.meter_number }}</p>
+
+                <!-- Stat cards -->
+                <div class="stat-grid-4">
+                    <div class="stat-card-dash">
+                        <div class="stat-icon" style="background: rgba(14,165,233,0.15); color: #0ea5e9">💳</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Water Balance</div>
+                            <div class="stat-value" id="balanceStat">ZMW {{ '%.2f'|format(user.balance) }}</div>
+                        </div>
+                    </div>
+                    <div class="stat-card-dash">
+                        <div class="stat-icon" style="background: rgba(6,182,212,0.15); color: #06b6d4">💧</div>
+                        <div class="stat-info">
+                            <div class="stat-label">This Week</div>
+                            <div class="stat-value">845 L</div>
+                        </div>
+                    </div>
+                    <div class="stat-card-dash">
+                        <div class="stat-icon" style="background: rgba(16,185,129,0.15); color: #10b981">📍</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Active Kiosks</div>
+                            <div class="stat-value" id="activeKioskCount">...</div>
+                        </div>
+                    </div>
+                    <div class="stat-card-dash">
+                        <div class="stat-icon" style="background: rgba(139,92,246,0.15); color: #8b5cf6">📅</div>
+                        <div class="stat-info">
+                            <div class="stat-label">Last Top-Up</div>
+                            <div class="stat-value">None</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nearby kiosks -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <h3>Nearby Kiosks</h3>
+                        <button class="btn-outline btn-sm" onclick="loadKiosks()">Refresh</button>
+                    </div>
+                    <div id="kioskList" class="kiosk-grid">Loading kiosks...</div>
+                </div>
+            </div>
+
+            <!-- TOP-UP SECTION -->
+            <div class="section hidden" id="section-topup">
+                <h2>Top Up Water Credits</h2>
+
+                <!-- Balance display -->
+                <div class="balance-hero">
+                    <div class="bh-label">Current Balance</div>
+                    <div class="bh-value" id="topupBalance">ZMW {{ '%.2f'|format(user.balance) }}</div>
+                    <div class="bh-sub">Account: {{ user.account_number }}</div>
+                </div>
+
+                <!-- Top-up form - calls POST /api/topup -->
+                <div class="card">
+                    <h3>Add Credits</h3>
+                    <div class="quick-amounts">
+                        {% for amt in [10, 20, 50, 100, 150, 200, 300, 500] %}
+                        <button class="amt-btn" onclick="setAmount({{ amt }})">{{ amt }}</button>
+                        {% endfor %}
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>Amount (ZMW)</label>
+                        <input type="number" id="topupAmount" class="input-field"
+                               placeholder="Enter amount (min ZMW 5)" min="5" max="500" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Method</label>
+                        <div class="method-btns">
+                            <button class="method-btn active" onclick="setMethod('mobile_money', this)">📱 Mobile Money</button>
+                            <button class="method-btn" onclick="setMethod('bank_transfer', this)">🏦 Bank Transfer</button>
+                            <button class="method-btn" onclick="setMethod('voucher', this)">🎟️ Voucher</button>
+                        </div>
+                    </div>
+                    <button class="btn-primary btn-full" id="topupBtn" onclick="doTopup()">
+                        Top Up
+                    </button>
+                    <div id="topupResult" style="margin-top: 12px;"></div>
+                </div>
+
+                <!-- Transaction history -->
+                <div class="card" style="margin-top: 16px;" id="txHistory" style="display:none;">
+                    <h3>Transaction History</h3>
+                    <table class="data-table" id="txTable">
+                        <thead><tr><th>Reference</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th></tr></thead>
+                        <tbody id="txBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- KIOSKS SECTION -->
+            <div class="section hidden" id="section-kiosks">
+                <div class="section-header">
+                    <h2>Kiosk Network</h2>
+                    <button class="btn-outline" onclick="loadKiosks()">Refresh</button>
+                </div>
+                <div id="allKioskList" class="kiosk-grid">Loading...</div>
+            </div>
+
+            <!-- USAGE SECTION -->
+            <div class="section hidden" id="section-usage">
+                <h2>Usage History</h2>
+                <div class="card">
+                    <h3>Weekly Consumption (Last 7 Days)</h3>
+                    <div class="bar-chart" id="usageChart"></div>
+                </div>
+                <div class="card" style="margin-top: 16px;">
+                    <h3>Daily Breakdown</h3>
+                    <table class="data-table">
+                        <thead><tr><th>Day</th><th>Volume (L)</th><th>Cost (ZMW)</th><th>Status</th></tr></thead>
+                        <tbody>
+                            {% for day, vol, cost in [('Mon',120,12),('Tue',95,9.5),('Wed',140,14),('Thu',110,11),('Fri',160,16),('Sat',200,20),('Sun',180,18)] %}
+                            <tr>
+                                <td>{{ day }}</td>
+                                <td>{{ vol }} L</td>
+                                <td>ZMW {{ '%.2f'|format(cost) }}</td>
+                                <td><span class="badge badge-success">✓ Normal</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ALERTS SECTION -->
+            <div class="section hidden" id="section-alerts">
+                <h2>Alerts &amp; Notifications</h2>
+                <div class="alert-list">
+                    <div class="alert-item info">
+                        <div class="alert-icon">ℹ️</div>
+                        <div class="alert-body">
+                            <div>Your water balance is sufficient for the next 7 days.</div>
+                            <div class="alert-time">⏰ Just now</div>
+                        </div>
+                    </div>
+                    <div class="alert-item warning">
+                        <div class="alert-icon">⚠️</div>
+                        <div class="alert-body">
+                            <div>Chelstone Kiosk has low pressure today. Consider using Matero Main.</div>
+                            <div class="alert-time">⏰ 2 hrs ago</div>
+                        </div>
+                    </div>
+                    <div class="alert-item success">
+                        <div class="alert-icon">✅</div>
+                        <div class="alert-body">
+                            <div>Scheduled maintenance at Chawama Kiosk 1 completes tonight.</div>
+                            <div class="alert-time">⏰ Today</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROFILE SECTION -->
+            <div class="section hidden" id="section-profile">
+                <h2>My Profile</h2>
+                <div class="card">
+                    <div class="profile-header">
+                        <div class="profile-avatar">{{ user.name[0] }}</div>
+                        <div>
+                            <div class="profile-name">{{ user.name }}</div>
+                            <div class="profile-email">{{ user.email }}</div>
+                            <span class="badge badge-info">Resident</span>
+                        </div>
+                    </div>
+                    <div class="profile-fields">
+                        <div class="profile-field">
+                            <span>Account Number</span>
+                            <span class="mono">{{ user.account_number }}</span>
+                        </div>
+                        <div class="profile-field">
+                            <span>Meter Number</span>
+                            <span class="mono">{{ user.meter_number }}</span>
+                        </div>
+                        <div class="profile-field">
+                            <span>Service Zone</span>
+                            <span>{{ user.zone }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-// Load kiosk data when page loads
-document.addEventListener("DOMContentLoaded", loadResidentData);
+    // Current state
+    let currentMethod = 'mobile_money';
+    let transactions = [];
 
-async function loadResidentData() {
-  await loadKiosks();
-}
-
-async function loadKiosks() {
-  try {
-    const res  = await fetch("{{ url_for('api_kiosks') }}");
-    const data = await res.json();
-    const list = document.getElementById("kiosk-list");
-
-    if (!data.success) { list.innerHTML = "<p>Could not load kiosk data.</p>"; return; }
-
-    list.innerHTML = data.kiosks.slice(0, 4).map(k => `
-      <div class="kiosk-item">
-        <div class="kiosk-status kiosk-status--${k.status}"></div>
-        <div class="kiosk-info">
-          <strong>${k.name}</strong>
-          <span>${k.location}</span>
-        </div>
-        <div class="kiosk-meta">
-          <span class="kiosk-badge kiosk-badge--${k.status}">${k.status}</span>
-          ${k.status !== 'offline' ? `<span>${k.pressure} bar · ${k.flow_rate} L/min</span>` : ''}
-        </div>
-      </div>
-    `).join("");
-  } catch (err) {
-    document.getElementById("kiosk-list").innerHTML = "<p>Error loading kiosks.</p>";
-  }
-}
-
-function setTopup(amount) {
-  document.getElementById("topup-amount").value = amount;
-  document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
-  event.target.classList.add("active");
-}
-
-async function doTopup() {
-  const amount = parseFloat(document.getElementById("topup-amount").value);
-  const result = document.getElementById("topup-result");
-
-  if (!amount || amount <= 0) {
-    showTopupResult("error", "Please enter a valid amount.");
-    return;
-  }
-
-  try {
-    const res  = await fetch("{{ url_for('api_topup') }}", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount }),
-    });
-    const data = await res.json();
-
-    if (data.success) {
-      showTopupResult("success", `${data.message} New balance: <strong>K${data.new_balance.toFixed(2)}</strong>`);
-      document.getElementById("balance").textContent = `K ${data.new_balance.toFixed(2)}`;
-      document.getElementById("topup-amount").value = "";
-      document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
-    } else {
-      showTopupResult("error", data.message);
+    // ---- Section navigation ----
+    function showSection(sectionId, link) {
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        document.getElementById('section-' + sectionId).classList.remove('hidden');
+        if (link) link.classList.add('active');
+        document.getElementById('pageTitle').textContent = link ? link.querySelector('span').textContent : sectionId;
+        if (sectionId === 'kiosks') loadKiosks();
+        return false;
     }
-  } catch (err) {
-    showTopupResult("error", "Network error — please try again.");
-  }
-}
 
-function showTopupResult(type, msg) {
-  const el = document.getElementById("topup-result");
-  el.style.display = "block";
-  el.className = `topup-result topup-result--${type}`;
-  el.innerHTML = msg;
-  setTimeout(() => { el.style.display = "none"; }, 5000);
-}
+    // ---- Toggle sidebar ----
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    // ---- Load kiosks from /api/kiosks ----
+    function loadKiosks() {
+        fetch('/api/kiosks')
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) return;
+                const kiosks = data.kiosks;
+                document.getElementById('activeKioskCount').textContent =
+                    kiosks.filter(k => k.status === 'online').length;
+
+                const html = kiosks.slice(0, 4).map(k => `
+                    <div class="kiosk-card">
+                        <div class="kiosk-header">
+                            <strong>${k.name}</strong>
+                            <span class="badge badge-${k.status === 'online' ? 'success' : k.status === 'offline' ? 'danger' : 'warning'}">${k.status}</span>
+                        </div>
+                        <div class="kiosk-loc">📍 ${k.location}</div>
+                        ${k.status === 'online' ? `
+                        <div class="kiosk-stats">
+                            <span>Flow: <b>${k.flow_rate} L/min</b></span>
+                            <span>Pressure: <b>${k.pressure} bar</b></span>
+                        </div>` : '<div class="kiosk-offline">Service unavailable</div>'}
+                    </div>
+                `).join('');
+                document.getElementById('kioskList').innerHTML = html;
+                if (document.getElementById('allKioskList')) {
+                    document.getElementById('allKioskList').innerHTML = kiosks.map(k => `
+                        <div class="kiosk-card">
+                            <div class="kiosk-header">
+                                <strong>${k.name}</strong>
+                                <span class="badge badge-${k.status === 'online' ? 'success' : k.status === 'offline' ? 'danger' : 'warning'}">${k.status}</span>
+                            </div>
+                            <div class="kiosk-loc">📍 ${k.location} &middot; ${k.zone}</div>
+                            ${k.status === 'online' ? `
+                            <div class="kiosk-stats">
+                                <span>Flow: <b>${k.flow_rate} L/min</b></span>
+                                <span>Pressure: <b>${k.pressure} bar</b></span>
+                                <span>Daily: <b>${k.daily_volume.toLocaleString()} L</b></span>
+                            </div>` : `<div class="kiosk-offline">${k.status === 'offline' ? 'Kiosk offline' : 'Under maintenance'}</div>`}
+                        </div>
+                    `).join('');
+                }
+            })
+            .catch(err => console.error('Kiosk load error:', err));
+    }
+
+    // ---- Top-up: POST /api/topup ----
+    function setAmount(amt) {
+        document.getElementById('topupAmount').value = amt;
+        document.querySelectorAll('.amt-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    function setMethod(method, btn) {
+        currentMethod = method;
+        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    function doTopup() {
+        const amount = parseFloat(document.getElementById('topupAmount').value);
+        const btn = document.getElementById('topupBtn');
+        const result = document.getElementById('topupResult');
+
+        if (!amount || amount < 5) {
+            result.innerHTML = '<div class="alert-item danger">Minimum top-up is ZMW 5.00</div>';
+            return;
+        }
+
+        btn.textContent = 'Processing...';
+        btn.disabled = true;
+
+        // POST to /api/topup
+        fetch('/api/topup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: amount, method: currentMethod })
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.textContent = 'Top Up';
+            btn.disabled = false;
+            if (data.success) {
+                result.innerHTML = `<div class="alert-item success">✅ ${data.message} | Ref: ${data.reference}</div>`;
+                // Update balance display
+                document.getElementById('balanceDisplay').textContent = 'ZMW ' + data.new_balance.toFixed(2);
+                document.getElementById('topupBalance').textContent = 'ZMW ' + data.new_balance.toFixed(2);
+                document.getElementById('balanceStat').textContent = 'ZMW ' + data.new_balance.toFixed(2);
+                // Add to transaction history
+                transactions.unshift(data);
+                updateTxHistory();
+                document.getElementById('topupAmount').value = '';
+            } else {
+                result.innerHTML = `<div class="alert-item danger">❌ ${data.error}</div>`;
+            }
+        })
+        .catch(err => {
+            btn.textContent = 'Top Up';
+            btn.disabled = false;
+            result.innerHTML = '<div class="alert-item danger">❌ Network error. Please try again.</div>';
+        });
+    }
+
+    function updateTxHistory() {
+        const tbody = document.getElementById('txBody');
+        if (!tbody || transactions.length === 0) return;
+        document.getElementById('txHistory').style.display = 'block';
+        tbody.innerHTML = transactions.map(t => `
+            <tr>
+                <td class="mono">${t.reference}</td>
+                <td><b>ZMW ${parseFloat(t.credits_added || t.amount).toFixed(2)}</b></td>
+                <td>${(t.method || '').replace('_', ' ')}</td>
+                <td>${t.timestamp}</td>
+                <td><span class="badge badge-success">✓ Completed</span></td>
+            </tr>
+        `).join('');
+    }
+
+    // ---- Refresh all data ----
+    function refreshData() {
+        loadKiosks();
+        showToast('Data refreshed', 'info');
+    }
+
+    // ---- Init on load ----
+    document.addEventListener('DOMContentLoaded', function() {
+        loadKiosks();
+        setInterval(loadKiosks, 30000);
+    });
 </script>
 {% endblock %}

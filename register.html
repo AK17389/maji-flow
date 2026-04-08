@@ -1,77 +1,123 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block title %}Register{% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
-  <div class="auth-card">
-    <div class="auth-header">
-      <div class="auth-logo">💧</div>
-      <h2>Create account</h2>
-      <p>Join Maji Flow — smart water for all</p>
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="logo" style="justify-content: center; margin-bottom: 16px;">
+                <div class="logo-icon">💧</div>
+                <div class="logo-text">
+                    <span class="logo-title">Maji Flow</span>
+                    <span class="logo-sub">Smart Water Management</span>
+                </div>
+            </div>
+            <h1>Create Account</h1>
+            <p>Join Maji Flow &mdash; smart water for Zambia</p>
+        </div>
+
+        <!-- Role Selector -->
+        <div class="role-selector">
+            <button type="button" class="role-btn active" id="roleResident" onclick="selectRole('resident')">
+                🏠 Resident
+            </button>
+            <button type="button" class="role-btn" id="roleUtility" onclick="selectRole('utility')">
+                🏭 Utility
+            </button>
+        </div>
+
+        <!-- Register Form: POST /register -->
+        <form method="POST" action="{{ url_for('register') }}" class="auth-form" id="registerForm">
+            <input type="hidden" name="role" id="roleInput" value="resident">
+
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <div class="input-wrap">
+                    <span class="input-icon">👤</span>
+                    <input type="text" id="name" name="name" required
+                           placeholder="Chanda Mwale" class="input-field">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <div class="input-wrap">
+                    <span class="input-icon">✉️</span>
+                    <input type="email" id="email" name="email" required
+                           placeholder="your@email.com" class="input-field">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrap">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="password" name="password" required
+                           placeholder="Min. 6 characters" class="input-field"
+                           oninput="checkStrength(this.value)">
+                    <button type="button" class="toggle-pw" onclick="togglePassword('password')">
+                        👁️
+                    </button>
+                </div>
+                <!-- Password strength indicator -->
+                <div class="pw-strength">
+                    <div class="pw-bar" id="pwBar"></div>
+                </div>
+                <span class="pw-label" id="pwLabel"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <div class="input-wrap">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="confirm_password" name="confirm_password"
+                           required placeholder="Repeat password" class="input-field">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary btn-full" id="submitBtn">
+                Create Account
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Already have an account?
+            <a href="{{ url_for('login') }}">Sign in</a>
+        </div>
     </div>
-
-    {% if error %}
-      <div class="alert alert-error">⚠️ {{ error }}</div>
-    {% endif %}
-    {% if success %}
-      <div class="alert alert-success">✅ {{ success }}</div>
-    {% endif %}
-
-    <form class="auth-form" method="POST" action="{{ url_for('register') }}">
-      <div class="form-group">
-        <label for="name">Full Name</label>
-        <input
-          type="text"
-          id="name"
-          name="name"
-          placeholder="Chanda Mutale"
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="email">Email Address</label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          placeholder="you@example.com"
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          placeholder="Choose a strong password"
-          required
-          minlength="6"
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="role">Account Type</label>
-        <select id="role" name="role">
-          <option value="resident">🏠 Resident</option>
-          <option value="utility">⚡ Utility Operator</option>
-        </select>
-      </div>
-
-      <button type="submit" class="btn btn-primary btn-full">Create Account →</button>
-    </form>
-
-    <div class="auth-footer">
-      Already have an account?
-      <a href="{{ url_for('login') }}">Login here</a>
-    </div>
-
-    <div class="demo-hints">
-      <p>This is a demo app — use the existing accounts to log in:</p>
-      <code>resident@majiflow.co.zm / water123</code>
-    </div>
-  </div>
 </div>
+
+{% block scripts %}
+<script>
+    function selectRole(role) {
+        document.getElementById('roleInput').value = role;
+        document.getElementById('roleResident').classList.toggle('active', role === 'resident');
+        document.getElementById('roleUtility').classList.toggle('active', role === 'utility');
+    }
+
+    function togglePassword(fieldId) {
+        const field = document.getElementById(fieldId);
+        field.type = field.type === 'password' ? 'text' : 'password';
+    }
+
+    function checkStrength(pw) {
+        const bar = document.getElementById('pwBar');
+        const label = document.getElementById('pwLabel');
+        if (!pw) { bar.style.width = '0'; label.textContent = ''; return; }
+        const strength = pw.length < 6 ? 1 : pw.length < 10 ? 2 : 3;
+        const colors = ['', '#ef4444', '#f59e0b', '#10b981'];
+        const labels = ['', 'Weak', 'Good', 'Strong'];
+        bar.style.width = (strength / 3 * 100) + '%';
+        bar.style.background = colors[strength];
+        label.textContent = labels[strength];
+        label.style.color = colors[strength];
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', function() {
+        const btn = document.getElementById('submitBtn');
+        btn.textContent = 'Creating account...';
+        btn.disabled = true;
+    });
+</script>
+{% endblock %}
 {% endblock %}
